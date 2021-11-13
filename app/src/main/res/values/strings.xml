@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Combustion Example</string>
+    <string name="app_title">Combustion Example</string>
+    <string name="menu_button_description">Menu</string>
+    <string name="devices_screen_title">Devices</string>
+    <string name="settings_screen_title">Settings</string>
+    <string name="celsius_label">\u2103</string>
+    <string name="fahrenheit_label">\u2109</string>
+    <string name="permissions_rationale">This app will not work without Bluetooth and Location permissions</string>
+    <string name="no_open_connections_message">cannot connect! All connections used. &#9785;&#65039;</string>
+    <string name="out_of_range_message">cannot connect! Out of range. &#9785;&#65039;</string>
+    <string name="connected_message">connected! &#128293;</string>
+</resources>

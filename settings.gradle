@@ -1,0 +1,17 @@
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        jcenter() // Warning: this repository is going to shut down soon
+        maven { url 'https://www.jitpack.io' }
+    }
+}
+rootProject.name = "Combustion Inc. Android Example"
+include ':app'
+
+var localAndroidBle = file(getProperty("combustion.use-local-framework"))
+if(localAndroidBle.exists()) {
+    include ':combustion-android-ble'
+    project(':combustion-android-ble').projectDir = localAndroidBle
+}

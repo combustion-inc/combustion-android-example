@@ -1,0 +1,93 @@
+plugins {
+    id("com.android.application")
+    id("kotlin-android")
+    id("com.google.gms.google-services")
+    id("io.github.reactivecircus.app-versioning") version "1.1.0"
+}
+
+android {
+    compileSdk 31
+
+    defaultConfig {
+        applicationId "inc.combustion.example"
+        minSdk 28
+        targetSdk 31
+        versionCode 1
+        versionName "0.0.1"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+    viewBinding {
+        enabled = true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+        useIR = true
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_version
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+        kotlinOptions {
+            freeCompilerArgs += [
+                    '-Xopt-in=kotlin.ExperimentalUnsignedTypes',
+                    '-Xopt-in=com.juul.kable.ObsoleteKableApi',
+                    '-Xjvm-default=compatibility'
+            ]
+        }
+    }
+}
+
+dependencies {
+    var localAndroidBle = file(getProperty("combustion.use-local-framework"))
+    if(localAndroidBle.exists()) {
+        implementation(project(":combustion-android-ble"))
+    } else {
+        implementation("com.github.combustion-inc:combustion-android-ble:$combustion_framework_version")
+    }
+
+    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("androidx.appcompat:appcompat:$appcompat_version")
+    implementation("com.google.android.material:material:$material_version")
+    implementation("androidx.compose.ui:ui:$compose_version")
+    implementation("androidx.compose.material:material:$compose_version")
+    implementation("androidx.compose.ui:ui-tooling-preview:$compose_version")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_runtime_ktx_version")
+    implementation("androidx.activity:activity-compose:$activity_compose_version")
+    implementation("androidx.navigation:navigation-compose:$navigation_compose_version")
+    implementation("androidx.navigation:navigation-common-ktx:$navigation_common_ktx_version")
+    implementation("com.github.alorma:compose-settings-ui:$settings_compose_version")
+    implementation("com.juul.kable:core:$kable_core_version")
+    implementation("com.vmadalin:easypermissions-ktx:$easypermissions_ktx_version")
+    implementation("androidx.lifecycle:lifecycle-service:$lifecycle_service_version")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
+    implementation("androidx.compose.ui:ui-viewbinding:$viewbinding_version")
+    androidTestImplementation("androidx.test.ext:junit:$junit_version")
+    androidTestImplementation("androidx.test.espresso:espresso-core:$espresso_core_version")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
+    debugImplementation("androidx.compose.ui:ui-tooling:$compose_version")
+    testImplementation('junit:junit:4.13.2')
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+}
