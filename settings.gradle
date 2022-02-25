@@ -4,8 +4,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         jcenter() // Warning: this repository is going to shut down soon
-        maven { url 'https://www.jitpack.io' }
     }
 }
-rootProject.name = "Combustion Inc. Engineering"
+rootProject.name = "Combustion Inc. Android Example"
 include ':app'
