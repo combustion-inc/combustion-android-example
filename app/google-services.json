@@ -22,6 +22,51 @@
           }
         },
         {
+          "client_id": "746307581755-b3dh4aeqn8jsmi7s38ragtlrju9of3fm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "inc.combustion.engineering",
+            "certificate_hash": "fb8ff74954515404e4bd8c8c7e672af5ea1529b7"
+          }
+        },
+        {
+          "client_id": "746307581755-lk0vkg05la0vmc83256dkf84acegi3ga.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "inc.combustion.engineering",
+            "certificate_hash": "f834e57be7c227dca5d0680b2894c153bbab0f8b"
+          }
+        },
+        {
+          "client_id": "746307581755-1nlpkmc3sr8tnkfghnpdardjo1nk9rm7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzctRF2YFPL-bdyBgbcQS34oDw1dtMzdk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "746307581755-1nlpkmc3sr8tnkfghnpdardjo1nk9rm7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:746307581755:android:472df06f2d16f570dfe91e",
+        "android_client_info": {
+          "package_name": "inc.combustion.example"
+        }
+      },
+      "oauth_client": [
+        {
           "client_id": "746307581755-1nlpkmc3sr8tnkfghnpdardjo1nk9rm7.apps.googleusercontent.com",
           "client_type": 3
         }

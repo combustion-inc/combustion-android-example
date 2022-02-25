@@ -48,7 +48,6 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
-
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         kotlinOptions {
             freeCompilerArgs += [
@@ -76,13 +75,10 @@ dependencies {
     implementation("com.vmadalin:easypermissions-ktx:$easypermissions_ktx_version")
     implementation("androidx.lifecycle:lifecycle-service:$lifecycle_service_version")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
-    implementation("com.google.android.gms:play-services-base:$play_services_base_version")
-    implementation("com.google.android.gms:play-services-auth:$play_services_auth_version")
-    implementation("androidx.compose.ui:ui-viewbinding:$viewbinding_version");
+    implementation("androidx.compose.ui:ui-viewbinding:$viewbinding_version")
     implementation platform("com.google.firebase:firebase-bom:$firebase_bom_version")
     implementation 'com.google.firebase:firebase-analytics-ktx'
     implementation 'com.google.firebase:firebase-auth'
-    implementation("com.github.PhilJay:MPAndroidChart:$mpandroidchart_version")
     androidTestImplementation("androidx.test.ext:junit:$junit_version")
     androidTestImplementation("androidx.test.espresso:espresso-core:$espresso_core_version")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
