@@ -15,7 +15,6 @@ import androidx.navigation.compose.rememberNavController
 import com.google.firebase.analytics.FirebaseAnalytics
 import inc.combustion.example.devices.DevicesScreen
 import inc.combustion.example.settings.SettingsScreen
-import inc.combustion.example.share.ShareScreen
 
 /**
  * Manages top-level activity state, user interface logic and navigation.
@@ -60,7 +59,6 @@ class CombustionAppState(
                 composable(screen.route) {
                     when (screen) {
                         is AppScreen.Devices -> DevicesScreen(appState)
-                        is AppScreen.Share -> ShareScreen(appState)
                         is AppScreen.Settings -> SettingsScreen(appState)
                     }
                 }
@@ -145,7 +143,6 @@ fun rememberCombustionAppState(
     topNavigationScreen: AppScreen = AppScreen.Settings,
     bottomNavigationScreens: List<AppScreen> = listOf(
         AppScreen.Devices,
-        AppScreen.Share
     ),
     startScreen: AppScreen = AppScreen.Devices,
     resources: Resources = LocalContext.current.resources,
