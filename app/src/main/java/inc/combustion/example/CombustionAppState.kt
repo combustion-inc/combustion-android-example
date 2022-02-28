@@ -13,7 +13,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.analytics.FirebaseAnalytics
-import inc.combustion.example.charts.ChartsScreen
 import inc.combustion.example.devices.DevicesScreen
 import inc.combustion.example.settings.SettingsScreen
 import inc.combustion.example.share.ShareScreen
@@ -61,7 +60,6 @@ class CombustionAppState(
                 composable(screen.route) {
                     when (screen) {
                         is AppScreen.Devices -> DevicesScreen(appState)
-                        is AppScreen.Charts -> ChartsScreen(appState)
                         is AppScreen.Share -> ShareScreen(appState)
                         is AppScreen.Settings -> SettingsScreen(appState)
                     }
@@ -147,7 +145,6 @@ fun rememberCombustionAppState(
     topNavigationScreen: AppScreen = AppScreen.Settings,
     bottomNavigationScreens: List<AppScreen> = listOf(
         AppScreen.Devices,
-        AppScreen.Charts,
         AppScreen.Share
     ),
     startScreen: AppScreen = AppScreen.Devices,

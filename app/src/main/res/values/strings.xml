@@ -3,7 +3,6 @@
     <string name="app_title">Combustion Example</string>
     <string name="menu_button_description">Menu</string>
     <string name="devices_screen_title">Devices</string>
-    <string name="charts_screen_title">Charts</string>
     <string name="camera_screen_title">Camera</string>
     <string name="share_screen_title">Share</string>
     <string name="settings_screen_title">Settings</string>
