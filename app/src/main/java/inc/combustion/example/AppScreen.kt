@@ -17,7 +17,6 @@ import inc.combustion.example.R
  */
 sealed class AppScreen(val route: String, @StringRes val titleResource: Int, @DrawableRes val iconResource: Int) {
     object Devices : AppScreen(route = "DevicesScreen", titleResource = R.string.devices_screen_title, iconResource = R.drawable.ic_flame_24)
-    object Camera : AppScreen(route = "CameraScreen", titleResource = R.string.camera_screen_title, iconResource = R.drawable.ic_camera_24)
     object Share : AppScreen(route = "ShareScreen", titleResource = R.string.share_screen_title, iconResource = R.drawable.ic_add_to_drive_24)
     object Settings : AppScreen(route = "SettingsScreen", titleResource = R.string.settings_screen_title, iconResource = R.drawable.ic_settings_24)
 
