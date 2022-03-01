@@ -46,7 +46,7 @@ jobs:
       id: relase_notes
       uses: cardinalby/git-get-release-action@1.2.2
       env:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       with:
         tag: ${{ github.ref_name }}
     - name: Print Changelog to file

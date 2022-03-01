@@ -51,11 +51,11 @@ end
 # configurations are not currently used, but we'll leave it in for now
 def build_package(version, build_dir)
     puts "-- Cleaning --"
-    system("make clean") or clean_abort("Failed to clean builds", version, false)
+    system("./gradlew clean") or clean_abort("Failed to clean builds", version, false)
     puts "-- Done cleaning --"
 
     puts "-- Assembling --"
-    system("make assemble") or clean_abort("Failed to assemble", version, false)
+    system("./gradlew assemble") or clean_abort("Failed to assemble", version, false)
     puts "-- Done Assembling --"
 
 end
