@@ -43,7 +43,7 @@ jobs:
         # override default build-tools version (29.0.3) -- optional
         BUILD_TOOLS_VERSION: "30.0.2"
     - name: git-get-release-action
-      id: relase_notes
+      id: release_notes
       uses: cardinalby/git-get-release-action@1.2.2
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
