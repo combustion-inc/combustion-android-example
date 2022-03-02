@@ -1,10 +1,11 @@
 name: Android CI
 
+# run commands with shell bash
 defaults:
   run:
     shell: bash
 
-
+# only run job on tags with start with v*""
 on:
   push:
     tags:
