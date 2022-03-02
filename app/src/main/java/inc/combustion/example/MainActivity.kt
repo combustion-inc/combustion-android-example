@@ -47,7 +47,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         super.onCreate(savedInstanceState)
 
         DeviceManager.initialize(application) {
-            tryStartScan()
         }
 
         val repository = DeviceManager.instance
@@ -70,6 +69,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                             }
                             is DeviceDiscoveredEvent.BluetoothOn -> {
                                 _bluetoothIsOn.value = true
+                                tryStartScan()
                             }
                             is DeviceDiscoveredEvent.DevicesCleared -> {
                                 // do nothing

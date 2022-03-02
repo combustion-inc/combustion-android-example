@@ -35,7 +35,7 @@ class DevicesViewModel(
                             onDiscoveredDevice(event.serialNumber)
                         }
                         is DeviceDiscoveredEvent.BluetoothOff -> {
-                            probes.clear()
+                            _deviceManager.clearDevices()
                         }
                         is DeviceDiscoveredEvent.DevicesCleared -> {
                             probes.clear()
