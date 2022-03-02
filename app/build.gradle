@@ -76,9 +76,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-service:$lifecycle_service_version")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation("androidx.compose.ui:ui-viewbinding:$viewbinding_version")
-    implementation platform("com.google.firebase:firebase-bom:$firebase_bom_version")
-    implementation 'com.google.firebase:firebase-analytics-ktx'
-    implementation 'com.google.firebase:firebase-auth'
     androidTestImplementation("androidx.test.ext:junit:$junit_version")
     androidTestImplementation("androidx.test.espresso:espresso-core:$espresso_core_version")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")

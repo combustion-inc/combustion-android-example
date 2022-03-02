@@ -1,7 +1,6 @@
 package inc.combustion.example
 
 import android.Manifest
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -15,12 +14,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import inc.combustion.service.DeviceDiscoveredEvent
-import inc.combustion.example.R
 import inc.combustion.example.theme.CombustionIncEngineeringTheme
 import inc.combustion.service.DeviceManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.*
-import androidx.activity.result.contract.ActivityResultContracts
+import inc.combustion.example.devices.DevicesScreen
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
@@ -152,17 +150,15 @@ fun CombustionAppScreen(
 ) {
     CombustionIncEngineeringTheme {
 
-        val appState = rememberCombustionAppState()
+        var noDevicesReasonString = "Searching..."
 
         if(!bluetoothIsOn.value) {
-            appState.noDevicesReasonString = "Please Turn On Bluetooth..."
+            noDevicesReasonString = "Please Turn On Bluetooth..."
         }
         else if(!isScanning.value) {
-            appState.noDevicesReasonString = "Please Turn On Scanning..."
+            noDevicesReasonString = "Please Turn On Scanning..."
         }
-        else {
-            appState.noDevicesReasonString = "Searching..."
-        }
-        CombustionAppContent(appState = appState)
+
+        DevicesScreen(noDevicesReasonString)
     }
 }

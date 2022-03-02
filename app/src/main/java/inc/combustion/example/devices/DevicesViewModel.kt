@@ -7,7 +7,6 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.analytics.FirebaseAnalytics
 import inc.combustion.LOG_TAG
 import inc.combustion.service.DeviceDiscoveredEvent
 import inc.combustion.service.ProbeUploadState
@@ -19,21 +18,9 @@ import androidx.compose.runtime.mutableStateOf as mutableStateOf1
 
 class DevicesViewModel(
     private val _deviceManager : DeviceManager,
-    private val _analytics: FirebaseAnalytics
 ) : ViewModel() {
 
-    data class SnackBarMessage(
-        var id : String,
-        var resource : Int
-    )
-
     var probes = mutableStateMapOf<String, ProbeUiState>()
-        private set
-
-    var isSnackBarShowing: MutableState<Boolean> = mutableStateOf1(false)
-        private set
-
-    var snackBarMessage: MutableState<SnackBarMessage> = mutableStateOf1(SnackBarMessage("", 0))
         private set
 
     init {
@@ -61,12 +48,11 @@ class DevicesViewModel(
 
     class Factory(
         private val deviceManager: DeviceManager,
-        private val analytics: FirebaseAnalytics
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DevicesViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return DevicesViewModel(deviceManager, analytics) as T
+                return DevicesViewModel(deviceManager) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
@@ -85,14 +71,8 @@ class DevicesViewModel(
         when(probe.connectionState.value) {
             ProbeUiState.ConnectionState.ADVERTISING_CONNECTABLE -> _deviceManager.connect(probe.serialNumber)
             ProbeUiState.ConnectionState.CONNECTED -> _deviceManager.disconnect(probe.serialNumber)
-            ProbeUiState.ConnectionState.ADVERTISING_NOT_CONNECTABLE -> showSnackBarMessage(probe.serialNumber, R.string.no_open_connections_message)
-            ProbeUiState.ConnectionState.OUT_OF_RANGE -> showSnackBarMessage(probe.serialNumber, R.string.out_of_range_message)
             else -> Log.d(LOG_TAG, "No toggle action ${probe.serialNumber} is ${probe.connectionState.value}")
         }
-    }
-
-    fun dismissSnackBarMessage() {
-        isSnackBarShowing.value = false
     }
 
     private fun onDiscoveredDevice(serialNumber: String) {
@@ -109,7 +89,6 @@ class DevicesViewModel(
                         if(it.connectionState.value == ProbeUiState.ConnectionState.CONNECTED &&
                             lastState != ProbeUiState.ConnectionState.CONNECTED
                         ) {
-                            showSnackBarMessage(probe.serialNumber, R.string.connected_message)
                             logDeviceConnection(
                                 "Probe",
                                 probe.fwVersion ?: "TBD",
@@ -132,13 +111,6 @@ class DevicesViewModel(
         params.putString("device_type", deviceType)
         params.putString("serial_number", serial)
         params.putString("firmware_version", firmwareVersion)
-
-        _analytics.logEvent("device_connected", params)
-    }
-
-    private fun showSnackBarMessage(id: String, resource: Int) {
-        snackBarMessage.value = SnackBarMessage(id, resource)
-        isSnackBarShowing.value = true
     }
 
     companion object {

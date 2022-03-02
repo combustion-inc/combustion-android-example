@@ -16,30 +16,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import inc.combustion.example.CombustionAppState
-import inc.combustion.example.CombustionAppContent
-import inc.combustion.example.rememberCombustionAppState
 import inc.combustion.example.R
 
 @Composable
 fun DevicesContent(
-    appState: CombustionAppState,
+    noDevicesReasonString: String,
     screenState: DevicesScreenState
 ) {
     val list = screenState.probes.values.toMutableStateList()
 
-    if(screenState.isSnackBarShowing.value) {
-        val message = stringResource(id = screenState.snackBarMessage.value.resource)
-        LaunchedEffect(screenState.isSnackBarShowing.value) {
-            appState.scaffoldState.snackbarHostState.showSnackbar(
-                message = String.format("%s %s",
-                    screenState.snackBarMessage.value.id,
-                    message
-                )
-            )
-            screenState.onDismissSnackbarMessage()
-        }
-    }
     if (list.size == 0) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -58,7 +43,7 @@ fun DevicesContent(
                     ),
                 color = MaterialTheme.colors.onPrimary,
                 style = MaterialTheme.typography.subtitle2,
-                text = appState.noDevicesReasonString
+                text = noDevicesReasonString
             )
         }
     }
@@ -316,36 +301,19 @@ fun TroubleshootingDataRow(
 @Composable
 fun Preview() {
     inc.combustion.example.theme.CombustionIncEngineeringTheme {
-        val appState = rememberCombustionAppState()
         val devices = DevicesViewModel.previewData(null)
         val stateList = remember { mutableStateMapOf<String, ProbeUiState>() }
-        val isSnackBarShowing = remember { mutableStateOf(true) }
-        val snackBarMessage = remember {
-            mutableStateOf(
-                DevicesViewModel.SnackBarMessage(
-                    "12345657", R.string.no_open_connections_message
-                )
-            )
-        }
 
         devices.forEach { stateList[it.serialNumber] = it }
 
         val screenState = DevicesScreenState(
             probes = stateList,
-            isSnackBarShowing = isSnackBarShowing,
-            snackBarMessage = snackBarMessage,
-            onDismissSnackbarMessage = { },
             onUnitsClick = { }
         ) { }
 
-        CombustionAppContent(
-            appState = appState,
-            content = @Composable {
-                DevicesContent(
-                    appState = appState,
-                    screenState = screenState
-                )
-            }
+        DevicesContent(
+            noDevicesReasonString = "No Devices Reason",
+            screenState = screenState
         )
     }
 }
