@@ -35,6 +35,7 @@ The example uses a single [`Activity`](https://developer.android.com/guide/compo
 * How to request Bluetooth permissions from the user so that your app can access Android Bluetooth resources.  
 * How to discover devices and be notified of global changes such as Bluetooth on/off and BLE scanning state changes.
 * How to create simulated probes to support development without real hardware in the loop.
+* How to configure debugging logging from the library.
 
 ### Device Discovery & State Updates
 The example uses a [`ViewModel`](https://developer.android.com/topic/libraries/architecture/viewmodel) to adapt data and state changes produced by the library to the app's View.  See the source comments in [`DevicesViewModel`](app/src/main/java/inc/combustion/example/devices/DevicesViewModel.kt) for a walk-through of the following:
