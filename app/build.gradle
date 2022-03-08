@@ -61,12 +61,17 @@ android {
 }
 
 dependencies {
-    var localAndroidBle = file(getProperty("combustion.use-local-framework"))
-    if(localAndroidBle.exists()) {
-        implementation(project(":combustion-android-ble"))
+    if(hasProperty("combustion.use-local-framework")){
+        var localAndroidBle = file(getProperty("combustion.use-local-framework"))
+        if(localAndroidBle.exists()) {
+            implementation(project(":combustion-android-ble"))
+        } else {
+            implementation("com.github.combustion-inc:combustion-android-ble:$combustion_framework_version")
+        }
     } else {
         implementation("com.github.combustion-inc:combustion-android-ble:$combustion_framework_version")
     }
+
 
     implementation("androidx.core:core-ktx:1.7.0")
     implementation("androidx.appcompat:appcompat:$appcompat_version")

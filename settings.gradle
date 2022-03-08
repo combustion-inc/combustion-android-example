@@ -9,9 +9,11 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Combustion Inc. Android Example"
 include ':app'
+include ':combustion-android-ble'
 
-var localAndroidBle = file(getProperty("combustion.use-local-framework"))
-if(localAndroidBle.exists()) {
-    include ':combustion-android-ble'
-    project(':combustion-android-ble').projectDir = localAndroidBle
+if(hasProperty("combustion.use-local-framework")) {
+    var localAndroidBle = file(getProperty("combustion.use-local-framework"))
+    if(localAndroidBle.exists()) {
+        project(':combustion-android-ble').projectDir = localAndroidBle
+    }
 }
