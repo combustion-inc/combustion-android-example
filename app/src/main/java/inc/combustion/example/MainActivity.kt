@@ -74,6 +74,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // The following switches can be used to increase the verbosity of debug log
+        // messages from the library.  We will continue to update these as needed to
+        // control the output of the log.
+        //  
+        // DebugSettings.DEBUG_LOG_BLE_UART_IO = true
+        // DebugSettings.DEBUG_LOG_BLE_OPERATIONS = true
+        // DebugSettings.DEBUG_LOG_CONNECTION_STATE = true
+        // DebugSettings.DEBUG_LOG_LOG_MANAGER_IO = true
+        // DebugSettings.DEBUG_LOG_SESSION_STATUS = true
+        // DebugSettings.DEBUG_LOG_TRANSFER = true
+
         // Initialize the DeviceManger
         DeviceManager.initialize(application) {
         }
