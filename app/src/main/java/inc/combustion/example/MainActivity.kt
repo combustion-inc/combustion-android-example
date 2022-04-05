@@ -28,13 +28,19 @@
 package inc.combustion.example
 
 import android.Manifest
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -46,11 +52,13 @@ import inc.combustion.framework.service.DeviceManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.*
 import inc.combustion.example.devices.DevicesScreen
+import inc.combustion.framework.service.CombustionService
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private var isScanning = mutableStateOf(true)
     private var bluetoothIsOn = mutableStateOf(true)
+    private var notificationId : Int? = null
 
     companion object {
         const val COMBUSTION_PERMISSIONS_REQUEST: Int = 1
@@ -147,13 +155,50 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             }
         }
 
-        // Start and bind to the service
-        DeviceManager.startCombustionService()
+        val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel(
+                "Combustion.Diagnostic.Channel",
+                "Combustion Diagnostic")
+        } else {
+            ""
+        }
+
+        // Create Notification for running the Combustion Service as a foreground
+        // service.  Customize this notification as needed for your app.
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("Combustion Example")
+            .setContentText("Example notification for Combustion Service.")
+            .setSmallIcon((R.drawable.ic_flame_24))
+            .build()
+
+        // Start and save a reference to the notification ID.
+        //
+        // The application can dismiss the notification when it is done using the
+        // service.  See onDestroy.
+        notificationId = DeviceManager.startCombustionService(notification)
+
+        // Bind to the service
         DeviceManager.bindCombustionService()
 
         setContent {
             CombustionAppScreen(isScanning, bluetoothIsOn)
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel(channelId: String, channelName: String): String{
+        val service = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val chan = NotificationChannel(
+            channelId,
+            channelName,
+            NotificationManager.IMPORTANCE_NONE
+        )
+
+        chan.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+
+        service.createNotificationChannel(chan)
+
+        return channelId
     }
 
     override fun onPermissionsDenied(requestCode: Int, perms: List<String>) {
@@ -176,6 +221,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     }
 
     override fun onDestroy() {
+        // This is a example app is a single Activity application.  We cancel the notification
+        // when the main activity is destroyed.
+        notificationId?.let {
+            val service = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            service.cancel(it)
+        }
         DeviceManager.unbindCombustionService()
         super.onDestroy()
     }
