@@ -41,7 +41,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import inc.combustion.example.R
@@ -228,13 +227,13 @@ fun CurrentTemperaturesRow(
         else -> MaterialTheme.colors.onPrimary
     }
 
-    Row() {
+    Row {
         TemperatureReading("T1", probeState.T1, color, Modifier.weight(1.0f))
         TemperatureReading("T2", probeState.T2, color, Modifier.weight(1.0f))
         TemperatureReading("T3", probeState.T3, color, Modifier.weight(1.0f))
         TemperatureReading("T4", probeState.T4, color, Modifier.weight(1.0f))
     }
-    Row() {
+    Row {
         TemperatureReading("T5", probeState.T5, color, Modifier.weight(1.0f))
         TemperatureReading("T6", probeState.T6, color, Modifier.weight(1.0f))
         TemperatureReading("T7", probeState.T7, color, Modifier.weight(1.0f))
@@ -281,7 +280,7 @@ fun TroubleshootingDataRow(
             if(probeState.uploadState.value == ProbeState.UploadState.IN_PROGRESS ||
                probeState.uploadState.value == ProbeState.UploadState.COMPLETE
             ) {
-                Row() {
+                Row {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
@@ -291,7 +290,7 @@ fun TroubleshootingDataRow(
                             color = MaterialTheme.colors.onPrimary,
                         )
 
-                        var label: String = "Upload Complete!"
+                        var label = "Upload Complete!"
                         if(probeState.uploadState.value == ProbeState.UploadState.IN_PROGRESS) {
                             label = String.format("%d of %d",
                                 probeState.recordsTransferred.value.toInt(),
@@ -307,7 +306,7 @@ fun TroubleshootingDataRow(
                     }
                 }
             }
-            Row() {
+            Row {
                 Text(
                     modifier = Modifier
                         .weight(1.0f),
@@ -344,6 +343,27 @@ fun TroubleshootingDataRow(
                     text = version
                 )
             }
+            if(probeState.hardwareRevision.value != null) {
+                Row {
+                    Text(
+                        modifier = Modifier
+                            .weight(1.0f),
+                        color = MaterialTheme.colors.onSecondary,
+                        style = MaterialTheme.typography.body1,
+                        textAlign = TextAlign.Center,
+                        text = ""
+                    )
+                    Text(
+                        modifier = Modifier
+                            .weight(1.0f),
+                        color = MaterialTheme.colors.onSecondary,
+                        style = MaterialTheme.typography.body1,
+                        textAlign = TextAlign.Center,
+                        text = probeState.hardwareRevision.value ?: ""
+                    )
+                }
+            }
+
         }
     }
 }

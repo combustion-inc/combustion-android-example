@@ -42,6 +42,7 @@ import inc.combustion.framework.service.Probe
  * @property serialNumber serial number.
  * @property macAddress Bluetooth MAC address.
  * @property firmwareVersion firmware version.
+ * @property hardwareRevision hardware revision.
  * @property rssi current received signal strength.
  * @property temperaturesCelsius current temperature values in Celsius.
  * @property connectionState current connect state.
@@ -53,9 +54,9 @@ import inc.combustion.framework.service.Probe
  */
 data class ProbeState(
     val serialNumber: String,
-
     var macAddress: MutableState<String> = mutableStateOf("TBD"),
     var firmwareVersion: MutableState<String?> = mutableStateOf(null),
+    var hardwareRevision: MutableState<String?> = mutableStateOf(null),
     var rssi: MutableState<Int> = mutableStateOf(0),
     var temperaturesCelsius: SnapshotStateList<Double> = mutableStateListOf(
         0.0,
@@ -178,6 +179,7 @@ data class ProbeState(
     fun updateProbeState(state: Probe) {
         macAddress.value = state.mac
         firmwareVersion.value = state.fwVersion
+        hardwareRevision.value = state.hwRevision
         connectionState.value = ConnectionState.fromDeviceConnectionState(state.connectionState)
         rssi.value = state.rssi
         temperaturesCelsius.clear()
