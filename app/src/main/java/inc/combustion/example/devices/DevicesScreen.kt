@@ -28,6 +28,7 @@
 package inc.combustion.example.devices
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -67,7 +68,6 @@ fun DevicesScreen(
         screenState = screenState
     )
 }
-
 @Composable
 fun DevicesContent(
     noDevicesReasonString: String,
@@ -109,22 +109,27 @@ fun DevicesContent(
                             horizontal = dimensionResource(id = R.dimen.large_padding),
                             vertical = dimensionResource(id = R.dimen.small_padding)
                         ),
-                    shape = RoundedCornerShape(
-                        dimensionResource(id = R.dimen.rounded_corner)
-                    )
+                    shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner)),
                 ) {
-                    Column {
+                    var troubleshootingIsVisible by remember {
+                        mutableStateOf(true)
+                    }
+                    Column(
+                        modifier = Modifier.clickable { troubleshootingIsVisible = !troubleshootingIsVisible }
+                    ) {
                         HeaderRow(
-                            probeState = item,
+                            probeUiState = item,
                             onBluetoothClick = { screenState.onBluetoothClick(item) },
                             onUnitsClick = { screenState.onUnitsClick(item) }
                         )
                         CurrentTemperaturesRow(
-                            probeState = item
+                            probeUiState = item
                         )
-                        TroubleshootingDataRow(
-                            probeState = item
-                        )
+                        if(troubleshootingIsVisible) {
+                            TroubleshootingDataRow(probeUiState = item)
+                        } else {
+                            Box(modifier = Modifier.padding(8.dp))
+                        }
                     }
                 }
             }
@@ -134,16 +139,16 @@ fun DevicesContent(
 
 @Composable
 fun HeaderRow(
-    probeState: ProbeState,
+    probeUiState: ProbeState,
     onBluetoothClick: () -> Unit,
     onUnitsClick: () -> Unit
 ) {
-    val unitsText = when(probeState.units.value) {
+    val unitsText = when(probeUiState.units.value) {
         ProbeState.Units.CELSIUS -> stringResource(R.string.celsius_label)
         ProbeState.Units.FAHRENHEIT -> stringResource(R.string.fahrenheit_label)
     }
 
-    val bluetoothIcon = when(probeState.connectionState.value) {
+    val bluetoothIcon = when(probeUiState.connectionState.value) {
         ProbeState.ConnectionState.OUT_OF_RANGE -> painterResource(R.drawable.ic_bluetooth_disabled_24)
         ProbeState.ConnectionState.ADVERTISING_CONNECTABLE -> painterResource(R.drawable.ic_bluetooth_searching_24)
         ProbeState.ConnectionState.ADVERTISING_NOT_CONNECTABLE -> painterResource(R.drawable.ic_bluetooth_searching_24)
@@ -153,7 +158,7 @@ fun HeaderRow(
         ProbeState.ConnectionState.DISCONNECTED -> painterResource(R.drawable.ic_bluetooth_24)
     }
 
-    val bluetoothIconColor = when(probeState.connectionState.value) {
+    val bluetoothIconColor = when(probeUiState.connectionState.value) {
         ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
         ProbeState.ConnectionState.ADVERTISING_CONNECTABLE -> MaterialTheme.colors.onPrimary
         ProbeState.ConnectionState.ADVERTISING_NOT_CONNECTABLE -> MaterialTheme.colors.onSecondary
@@ -184,7 +189,7 @@ fun HeaderRow(
             color = MaterialTheme.colors.onPrimary,
             style = MaterialTheme.typography.h5,
             textAlign = TextAlign.Center,
-            text = probeState.serialNumber
+            text = probeUiState.serialNumber
         )
         IconButton(
             onClick = onBluetoothClick,
@@ -220,33 +225,36 @@ fun HeaderRow(
 
 @Composable
 fun CurrentTemperaturesRow(
-    probeState: ProbeState
+    probeUiState: ProbeState
 ) {
-    val color = when(probeState.connectionState.value) {
+    val color = when(probeUiState.connectionState.value) {
         ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
         else -> MaterialTheme.colors.onPrimary
     }
 
     Row {
-        TemperatureReading("T1", probeState.T1, color, Modifier.weight(1.0f))
-        TemperatureReading("T2", probeState.T2, color, Modifier.weight(1.0f))
-        TemperatureReading("T3", probeState.T3, color, Modifier.weight(1.0f))
-        TemperatureReading("T4", probeState.T4, color, Modifier.weight(1.0f))
+        TemperatureReading("Instant Read", probeUiState.instantRead, color, Modifier.weight(1.0f))
     }
     Row {
-        TemperatureReading("T5", probeState.T5, color, Modifier.weight(1.0f))
-        TemperatureReading("T6", probeState.T6, color, Modifier.weight(1.0f))
-        TemperatureReading("T7", probeState.T7, color, Modifier.weight(1.0f))
-        TemperatureReading("T8", probeState.T8, color, Modifier.weight(1.0f))
+        TemperatureReading("T1", probeUiState.T1, color, Modifier.weight(1.0f))
+        TemperatureReading("T2", probeUiState.T2, color, Modifier.weight(1.0f))
+        TemperatureReading("T3", probeUiState.T3, color, Modifier.weight(1.0f))
+        TemperatureReading("T4", probeUiState.T4, color, Modifier.weight(1.0f))
+    }
+    Row {
+        TemperatureReading("T5", probeUiState.T5, color, Modifier.weight(1.0f))
+        TemperatureReading("T6", probeUiState.T6, color, Modifier.weight(1.0f))
+        TemperatureReading("T7", probeUiState.T7, color, Modifier.weight(1.0f))
+        TemperatureReading("T8", probeUiState.T8, color, Modifier.weight(1.0f))
     }
 }
 
 @Composable
 fun TemperatureReading(
     label: String,
-    value: MutableState<String>,
+    value: State<String>,
     color: Color,
-    modifier: Modifier
+    modifier: Modifier,
 ) {
     Column(modifier) {
         Text(
@@ -265,105 +273,96 @@ fun TemperatureReading(
 }
 
 @Composable
-fun TroubleshootingDataRow(
-    probeState: ProbeState
+fun TroubleshootingDataItem(
+    label: String,
+    value: String,
+    color: Color,
 ) {
-    Row(
-        modifier = Modifier.padding(
-            vertical = dimensionResource(id = R.dimen.large_padding)
+    Row {
+        Text(
+            modifier = Modifier
+                .weight(1.0f)
+                .padding(start = 12.dp, top = 4.dp),
+            color = MaterialTheme.colors.onSecondary,
+            style = MaterialTheme.typography.body1,
+            textAlign = TextAlign.Left,
+            text = label
         )
+        Text(
+            modifier = Modifier
+                .weight(1.0f)
+                .padding(end = 12.dp, top = 4.dp),
+            color = color,
+            style = MaterialTheme.typography.body1,
+            textAlign = TextAlign.Right,
+            text = value
+        )
+    }
+}
+
+@Composable
+fun TroubleshootingDataRow(
+    probeUiState: ProbeState
+) {
+    val color = when(probeUiState.connectionState.value) {
+        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
+        else -> MaterialTheme.colors.onPrimary
+    }
+
+    Row(modifier = Modifier
+        .padding(vertical = dimensionResource(id = R.dimen.large_padding))
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            if(probeState.uploadState.value == ProbeState.UploadState.IN_PROGRESS ||
-               probeState.uploadState.value == ProbeState.UploadState.COMPLETE
-            ) {
-                Row {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        LinearProgressIndicator(
-                            progress = probeState.uploadProgress.value,
-                            color = MaterialTheme.colors.onPrimary,
-                        )
-
-                        var label = "Upload Complete!"
-                        if(probeState.uploadState.value == ProbeState.UploadState.IN_PROGRESS) {
-                            label = String.format("%d of %d",
-                                probeState.recordsTransferred.value.toInt(),
-                                probeState.recordsRequested.value.toInt())
-                        }
-
-                        Text(
-                            color = MaterialTheme.colors.onSecondary,
-                            style = MaterialTheme.typography.body2,
-                            textAlign = TextAlign.Left,
-                            text = label
-                        )
-                    }
-                }
-            }
-            Row {
-                Text(
-                    modifier = Modifier
-                        .weight(1.0f),
-                    color = MaterialTheme.colors.onSecondary,
-                    style = MaterialTheme.typography.body1,
-                    textAlign = TextAlign.Center,
-                    text = "Probe"
+            Column {
+                TroubleshootingDataItem(
+                    label = "Color",
+                    value = probeUiState.color.value,
+                    color = color
                 )
-                Text(
-                    modifier = Modifier
-                        .weight(1.0f),
-                    color = MaterialTheme.colors.onSecondary,
-                    style = MaterialTheme.typography.body1,
-                    textAlign = TextAlign.Center,
-                    text = "RSSI: ${probeState.rssi.value}"
+                TroubleshootingDataItem(
+                    label = "ID",
+                    value = probeUiState.id.value,
+                    color = color
                 )
-            }
-            Row {
-                val version = probeState.firmwareVersion.value ?: ""
-                Text(
-                    modifier = Modifier
-                        .weight(1.0f),
-                    color = MaterialTheme.colors.onSecondary,
-                    style = MaterialTheme.typography.body1,
-                    textAlign = TextAlign.Center,
-                    text = probeState.macAddress.value
+                TroubleshootingDataItem(
+                    label = "Upload Status",
+                    value = probeUiState.uploadStatus.value,
+                    color = color
                 )
-                Text(
-                    modifier = Modifier
-                        .weight(1.0f),
-                    color = MaterialTheme.colors.onSecondary,
-                    style = MaterialTheme.typography.body1,
-                    textAlign = TextAlign.Center,
-                    text = version
+                TroubleshootingDataItem(
+                    label = "Record Count",
+                    value = probeUiState.recordsDownloaded.value.toString(),
+                    color = color
+                )
+                TroubleshootingDataItem(
+                    label = "Record Range",
+                    value = probeUiState.recordRange.value,
+                    color = color
+                )
+                TroubleshootingDataItem(
+                    label = "Firmware",
+                    value = probeUiState.firmwareVersion.value ?: "",
+                    color = color
+                )
+                TroubleshootingDataItem(
+                    label = "Hardware",
+                    value = probeUiState.hardwareRevision.value ?: "",
+                    color = color
+                )
+                TroubleshootingDataItem(
+                    label = "RSSI",
+                    value = probeUiState.rssi.value.toString(),
+                    color = color
+                )
+                TroubleshootingDataItem(
+                    label = "MAC",
+                    value = probeUiState.macAddress.value,
+                    color = color
                 )
             }
-            if(probeState.hardwareRevision.value != null) {
-                Row {
-                    Text(
-                        modifier = Modifier
-                            .weight(1.0f),
-                        color = MaterialTheme.colors.onSecondary,
-                        style = MaterialTheme.typography.body1,
-                        textAlign = TextAlign.Center,
-                        text = ""
-                    )
-                    Text(
-                        modifier = Modifier
-                            .weight(1.0f),
-                        color = MaterialTheme.colors.onSecondary,
-                        style = MaterialTheme.typography.body1,
-                        textAlign = TextAlign.Center,
-                        text = probeState.hardwareRevision.value ?: ""
-                    )
-                }
-            }
-
         }
     }
 }

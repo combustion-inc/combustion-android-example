@@ -28,13 +28,22 @@
 package inc.combustion.example
 
 import android.Manifest
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -46,11 +55,14 @@ import inc.combustion.framework.service.DeviceManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.*
 import inc.combustion.example.devices.DevicesScreen
+import inc.combustion.example.theme.Combustion_Yellow
+import inc.combustion.framework.service.ProbeScanner
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private var isScanning = mutableStateOf(true)
     private var bluetoothIsOn = mutableStateOf(true)
+    private var notificationId : Int? = null
 
     companion object {
         const val COMBUSTION_PERMISSIONS_REQUEST: Int = 1
@@ -69,7 +81,27 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     Manifest.permission.ACCESS_FINE_LOCATION,
                 )
             }
+
+        const val USE_FOREGROUND_SERVICE = true
+        const val DEMO_PROBE_SCANNER = false
     }
+
+    init {
+        // The following shows how to use the ProbeScanner to collect scan results
+        // independent of the Combustion Service.  This class runs only during the
+        // lifecycle scope of this component.  Results are returned in the collect.
+        if(DEMO_PROBE_SCANNER) {
+            ProbeScanner.start(this)
+            lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.CREATED) {
+                    ProbeScanner.scanResults.collect {
+                        Log.d(LOG_TAG, "$it")
+                    }
+                }
+            }
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,7 +122,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         }
 
         val repository = DeviceManager.instance
-
 
         // If the DeviceManager is already initialized and bound to the Combustion Android Service,
         // then the lambda registered here is immediately called.  Otherwise, this callback is
@@ -147,8 +178,49 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             }
         }
 
-        // Start and bind to the service
-        DeviceManager.startCombustionService()
+        val notification = if(USE_FOREGROUND_SERVICE) {
+            // Create an explicit intent for an Activity in your app
+            val intent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            intent.addCategory(Intent.CATEGORY_LAUNCHER)
+
+            val pendingIntent: PendingIntent = PendingIntent.getActivity(
+                this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                createNotificationChannel(
+                    "Combustion.Example.Channel",
+                    "Combustion Example")
+            } else {
+                ""
+            }
+
+            NotificationCompat.Builder(this, channelId)
+                .setContentTitle("Combustion Example")
+                .setContentText("Helping make your cook more enjoyable")
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(false)
+                .setSmallIcon((R.drawable.ic_flame_24))
+                .build()
+
+        } else {
+            null
+        }
+
+        // Start the Service.  Optionally pass in the foreground notification to display
+        // to the user for the service.  Store the notification ID so that it can be
+        // canceled on exit.
+        //
+        // If the Service is used globally throughout the app, this action only needs
+        // to happen once.  If the app calls stopService, then a subsequent call to
+        // start service is needed.
+        notificationId = DeviceManager.startCombustionService(notification)
+
+        // Binds the the DeviceManager singleton to the Combustion Service so that the
+        // singleton can make API calls to the service throughout the app.  Again, this
+        // call is only needed once per service start, across the entire application.
         DeviceManager.bindCombustionService()
 
         setContent {
@@ -176,10 +248,32 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     }
 
     override fun onDestroy() {
+        // If we have a notification ID for the service, make sure we cancel it
+        // when the application exits.
+        notificationId?.let {
+            val service = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            service.cancel(it)
+        }
         DeviceManager.unbindCombustionService()
         super.onDestroy()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel(channelId: String, channelName: String): String{
+        val service = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val chan = NotificationChannel(
+            channelId,
+            channelName,
+            NotificationManager.IMPORTANCE_NONE
+        )
+
+        chan.lightColor = Combustion_Yellow.hashCode()
+        chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+
+        service.createNotificationChannel(chan)
+
+        return channelId
+    }
     /**
      * If the user has consented to the required Bluetooth permissions, then start scanning
      * for probes.

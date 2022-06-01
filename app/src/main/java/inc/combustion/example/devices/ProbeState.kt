@@ -36,7 +36,7 @@ import inc.combustion.framework.service.ProbeUploadState
 import inc.combustion.framework.service.Probe
 
 /**
- * Observable state data object for a probe.  Binds the state between the DeviceScreen's ViewModel
+ * State data object for a probe.  Binds the state between the DeviceScreen's ViewModel
  * and Composable functions.  All of the properties in this class are observable using Kotlin State.
  *
  * @property serialNumber serial number.
@@ -47,10 +47,12 @@ import inc.combustion.framework.service.Probe
  * @property temperaturesCelsius current temperature values in Celsius.
  * @property connectionState current connect state.
  * @property units user's temperature units preference.
- * @property recordsTransferred number of records transferred during current upload.
- * @property recordsRequested number of records requested during current upload.
- * @property uploadProgress upload progress percentage.
- * @property uploadState current upload progress state.
+ * @property uploadStatus user friendly status string of the upload
+ * @property recordsDownloaded number of records stored by the service
+ * @property recordRange the record range on the porbe
+ * @property color the probe's color setting.
+ * @property id the probes ID setting.
+ * @property instantRead the probe's Instant Read value.
  */
 data class ProbeState(
     val serialNumber: String,
@@ -70,26 +72,18 @@ data class ProbeState(
     ),
     var connectionState: MutableState<ConnectionState> = mutableStateOf(ConnectionState.OUT_OF_RANGE),
     var units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT),
-    var recordsTransferred: MutableState<UInt> = mutableStateOf(0u),
-    var recordsRequested: MutableState<UInt> = mutableStateOf(0u),
-    var uploadProgress: MutableState<Float> = mutableStateOf(0.0f),
-    var uploadState: MutableState<UploadState> = mutableStateOf(UploadState.NEEDED),
+    var uploadStatus: MutableState<String> = mutableStateOf(""),
+    var recordsDownloaded: MutableState<Int> = mutableStateOf(0),
+    var recordRange: MutableState<String> = mutableStateOf(""),
+    var color: MutableState<String> = mutableStateOf(""),
+    var id: MutableState<String> = mutableStateOf(""),
+    var instantRead: MutableState<String> = mutableStateOf("")
 ) {
-    /**
-     * Enumerates units preference.
-     *
-     * @property string Readable form of enumeration value.
-     */
     enum class Units(val string: String) {
         FAHRENHEIT("Fahrenheit"),
         CELSIUS("Celsius")
     }
 
-    /**
-     * Adapts framework ConnectionState
-     *
-     * @property string Readable form of enumeration value.
-     */
     enum class ConnectionState(val string: String) {
         OUT_OF_RANGE("Out of Range"),
         ADVERTISING_CONNECTABLE("Advertising Connectable"),
@@ -114,110 +108,93 @@ data class ProbeState(
         }
     }
 
-    /**
-     * Adapts framework UploadState
-     */
     enum class UploadState {
-        IN_PROGRESS,
         COMPLETE,
         NEEDED
     }
 
-    /**
-     * T1 sensor reading from the thermometer.  Closest to tip end of thermometer.
-     */
-    val T1 : MutableState<String>
-        get() = mutableStateOf(String.format("%.1f", getTemperature(0)))
-
-    /**
-     * T2 sensor reading from the thermometer.
-     */
-    val T2 : MutableState<String>
-        get() = mutableStateOf(String.format("%.1f", getTemperature(1)))
-
-    /**
-     * T3 sensor reading from the thermometer.
-     */
-    val T3 : MutableState<String>
-        get() = mutableStateOf(String.format("%.1f", getTemperature(2)))
-
-    /**
-     * T4 sensor reading from the thermometer.
-     */
-    val T4 : MutableState<String>
-        get() = mutableStateOf(String.format("%.1f", getTemperature(3)))
-
-    /**
-     * T5 sensor reading from the thermometer.
-     */
-    val T5 : MutableState<String>
-        get() = mutableStateOf(String.format("%.1f", getTemperature(4)))
-
-    /**
-     * T6 sensor reading from the thermometer.
-     */
-    val T6 : MutableState<String>
-        get() = mutableStateOf(String.format("%.1f", getTemperature(5)))
-
-    /**
-     * T7 sensor reading from the thermometer.
-     */
-    val T7 : MutableState<String>
-        get() = mutableStateOf(String.format("%.1f", getTemperature(6)))
-
-    /**
-     * T8 sensor reading from the thermometer.  Closest to handle end of thermometer.
-     */
-    val T8 : MutableState<String>
-        get() = mutableStateOf(String.format("%.1f", getTemperature(7)))
+    val T1 : MutableState<String> = mutableStateOf("")
+    val T2 : MutableState<String> = mutableStateOf("")
+    val T3 : MutableState<String> = mutableStateOf("")
+    val T4 : MutableState<String> = mutableStateOf("")
+    val T5 : MutableState<String> = mutableStateOf("")
+    val T6 : MutableState<String> = mutableStateOf("")
+    val T7 : MutableState<String> = mutableStateOf("")
+    val T8 : MutableState<String> = mutableStateOf("")
 
     /**
      * Updates this data object with the state update from the DeviceManager.
      *
      * @param state state update from the DeviceManager.
      */
-    fun updateProbeState(state: Probe) {
+    fun updateProbeState(state: Probe, downloads: Int) {
         macAddress.value = state.mac
         firmwareVersion.value = state.fwVersion
         hardwareRevision.value = state.hwRevision
         connectionState.value = ConnectionState.fromDeviceConnectionState(state.connectionState)
         rssi.value = state.rssi
-        temperaturesCelsius.clear()
-        temperaturesCelsius.addAll(state.temperatures.values)
+        recordsDownloaded.value = downloads
+        color.value = state.color.toString()
+        id.value = state.id.toString()
 
-        if(state.uploadState is ProbeUploadState.ProbeUploadInProgress) {
-            val uploadProgressState = state.uploadState as ProbeUploadState.ProbeUploadInProgress
-            uploadProgress.value =
-                uploadProgressState.recordsTransferred.toFloat() /
-                        uploadProgressState.recordsRequested.toFloat()
-            recordsTransferred.value = uploadProgressState.recordsTransferred
-            recordsRequested.value = uploadProgressState.recordsRequested
-            uploadState.value = UploadState.IN_PROGRESS
+        instantRead.value = if(state.instantRead != null) {
+            String.format("%.1f", state.instantRead?.let { convertTemperature(it) })
+        } else {
+            "---"
+        }
+
+        if(state.temperatures != null) {
+            state.temperatures?.let {
+                T1.value = String.format("%.1f", convertTemperature(it.values[0]))
+                T2.value = String.format("%.1f", convertTemperature(it.values[1]))
+                T3.value = String.format("%.1f", convertTemperature(it.values[2]))
+                T4.value = String.format("%.1f", convertTemperature(it.values[3]))
+                T5.value = String.format("%.1f", convertTemperature(it.values[4]))
+                T6.value = String.format("%.1f", convertTemperature(it.values[5]))
+                T7.value = String.format("%.1f", convertTemperature(it.values[6]))
+                T8.value = String.format("%.1f", convertTemperature(it.values[7]))
+            }
+        } else {
+            T1.value = "---"
+            T2.value = "---"
+            T3.value = "---"
+            T4.value = "---"
+            T5.value = "---"
+            T6.value = "---"
+            T7.value = "---"
+            T8.value = "---"
+        }
+
+
+        uploadStatus.value = if(state.uploadState is ProbeUploadState.ProbeUploadInProgress) {
+            val inProgress = state.uploadState as ProbeUploadState.ProbeUploadInProgress
+            val percent = ((inProgress.recordsTransferred.toFloat() / inProgress.recordsRequested.toFloat()) * 100.0).toInt()
+
+            "$percent% of ${inProgress.recordsRequested}"
         }
         else if(state.uploadState is ProbeUploadState.ProbeUploadComplete){
-            uploadProgress.value = 1.0f
-            recordsTransferred.value = 0u
-            recordsRequested.value = 0u
-            uploadState.value = UploadState.COMPLETE
+            UploadState.COMPLETE.toString()
         }
         else {
-            uploadProgress.value = 0.0f
-            recordsTransferred.value = 0u
-            recordsRequested.value = 0u
-            uploadState.value = UploadState.NEEDED
+            UploadState.NEEDED.toString()
         }
+
+        recordRange.value = if(state.connectionState == DeviceConnectionState.CONNECTED)
+            "${state.minSequence} : ${state.maxSequence}"
+        else
+            ""
     }
 
     /**
-     * Units conversion for the specified sensor.
+     * Converts the input temperature in Celsius to the user's current units preference
      *
-     * @param index index of the sensor on the probe.
-     * @return temperature reading in user preferred units.
+     * @param temp Temperature in C
+     * @return temperature in preferred units.
      */
-    private fun getTemperature(index: Int) : Double {
+    private fun convertTemperature(temp: Double) : Double {
         return if(units.value == Units.CELSIUS)
-            temperaturesCelsius[index]
+            temp
         else
-            (temperaturesCelsius[index] * 1.8) + 32.0
+            (temp * 1.8) + 32.0
     }
 }
