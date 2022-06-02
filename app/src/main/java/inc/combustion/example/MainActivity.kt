@@ -219,8 +219,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         notificationId = DeviceManager.startCombustionService(notification)
 
         // Binds the the DeviceManager singleton to the Combustion Service so that the
-        // singleton can make API calls to the service throughout the app.  Again, this
-        // call is only needed once per service start, across the entire application.
+        // singleton can make API calls to the service throughout the app.
+        //
+        // See README.md for further guidelines on managing Service Lifecycle in more
+        // complex apps.
         DeviceManager.bindCombustionService()
 
         setContent {
@@ -254,7 +256,14 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             val service = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             service.cancel(it)
         }
+
+        // Unbind Combustion Service. The DeviceManager will automatically unbind the connection
+        // when all references reach 0.
+        //
+        // See README.md for further guidelines on managing Service Lifecycle in more
+        // complex apps.
         DeviceManager.unbindCombustionService()
+
         super.onDestroy()
     }
 
