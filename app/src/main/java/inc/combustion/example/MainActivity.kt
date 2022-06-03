@@ -181,9 +181,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         val notification = if(USE_FOREGROUND_SERVICE) {
             // Create an explicit intent for an Activity in your app
             val intent = Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             }
-            intent.addCategory(Intent.CATEGORY_LAUNCHER)
 
             val pendingIntent: PendingIntent = PendingIntent.getActivity(
                 this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
