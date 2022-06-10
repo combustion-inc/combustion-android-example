@@ -57,5 +57,14 @@ Following the [State and Jetpack Compose](https://developer.android.com/jetpack/
 * How to display static properties of a probe, such as serial number, firmware version and hardware revision.
 * How to display dynamic BLE properties of a probe, such as connection state and RSSI.
 
+### Service Lifecycle
+The `DeviceManager` class in the framework manages the lifecycle of the `CombustionService`.  The following are lifecycle guidelines for managing the service. 
+* Call `startCombustionService` at the point that you want to start consuming the API, for instance from `onCreate` in your launcher activity.
+* Call `bindCombustionService` at least once, after `startCombustionService` to establish the connection.
+* If the `DeviceManager` is used across multiple lifecycle components, each component should call `bindCombustionService` when created and `unbindCombustionService` when destroyed.
+* The `DeviceManager` maintains a reference count on bindings.  After first binding, it will automatically unbind the singleton connection when the reference count reaches 0.
+* You can call `stopCombustionService` to reset the reference count to 0 and stop the service.  This will bring the lifecycle to initial state and the earlier steps still apply.
+
+
 ## Reporting Issues
 Your feedback is important.  For reporting issues use the [issue tracker](https://github.com/combustion-inc/combustion-android-example/issues).  
