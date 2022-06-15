@@ -10,4 +10,6 @@
     <string name="no_open_connections_message">cannot connect! All connections used. &#9785;&#65039;</string>
     <string name="out_of_range_message">cannot connect! Out of range. &#9785;&#65039;</string>
     <string name="connected_message">connected! &#128293;</string>
+    <string name="set_color_fail">Failed to set Probe Color</string>
+    <string name="set_id_fail">Failed to set Probe ID</string>
 </resources>

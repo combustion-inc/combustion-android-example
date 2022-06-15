@@ -28,6 +28,8 @@
 package inc.combustion.example.devices
 
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import inc.combustion.framework.service.ProbeColor
+import inc.combustion.framework.service.ProbeID
 
 /**
  * Data object for DeviceScreen state.
@@ -42,5 +44,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 data class DevicesScreenState(
     val probes: SnapshotStateMap<String, ProbeState>,
     val onUnitsClick: (ProbeState) -> Unit,
-    val onBluetoothClick: (ProbeState) -> Unit
+    val onBluetoothClick: (ProbeState) -> Unit,
+    val onSetProbeColorClick: (String, ProbeColor) -> Unit,
+    val onSetProbeIDClick: (String, ProbeID) -> Unit
 )

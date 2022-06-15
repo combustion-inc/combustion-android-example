@@ -77,6 +77,7 @@ data class ProbeState(
     var recordRange: MutableState<String> = mutableStateOf(""),
     var color: MutableState<String> = mutableStateOf(""),
     var id: MutableState<String> = mutableStateOf(""),
+    var batteryStatus: MutableState<String> = mutableStateOf(""),
     var instantRead: MutableState<String> = mutableStateOf("")
 ) {
     enum class Units(val string: String) {
@@ -136,6 +137,7 @@ data class ProbeState(
         recordsDownloaded.value = downloads
         color.value = state.color.toString()
         id.value = state.id.toString()
+        batteryStatus.value = state.batteryStatus.toString()
 
         instantRead.value = if(state.instantRead != null) {
             String.format("%.1f", state.instantRead?.let { convertTemperature(it) })
