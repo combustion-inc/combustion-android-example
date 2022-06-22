@@ -53,7 +53,7 @@ jobs:
     - name: Print Changelog to file
       run: echo "${{ steps.release_notes.outputs.body }}" | tee app/build/outputs/release-notes.txt
     - name: upload artifact to Firebase App Distribution
-      uses: wzieba/Firebase-Distribution-Github-Action@v1.3.2
+      uses: wzieba/Firebase-Distribution-Github-Action@v1.3.3
       with:
         appId: ${{secrets.FIREBASE_APP_ID}}
         token: ${{secrets.FIREBASE_TOKEN}}
