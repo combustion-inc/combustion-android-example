@@ -31,7 +31,9 @@ The example shows how to use the `Flow` instances produced by the library to han
 
 ### Initialization & Setup
 The example uses a single [`Activity`](https://developer.android.com/guide/components/activities/intro-activities).  See the source comments in [`MainActivity`](app/src/main/java/inc/combustion/example/MainActivity.kt) for a walk-through of the following:
-* How to initialize the library.
+* How to initialize the library and start Combustion's Android Service.
+* How to create a notification and have the service run in the foreground for long-running use-cases.
+* How to discover advertising probes and their temperature readings independent of the service.
 * How to request Bluetooth permissions from the user so that your app can access Android Bluetooth resources.  
 * How to discover devices and be notified of global changes such as Bluetooth on/off and BLE scanning state changes.
 * How to create simulated probes to support development without real hardware in the loop.
@@ -48,14 +50,21 @@ The example uses a [`ViewModel`](https://developer.android.com/topic/libraries/a
 ### Displaying Data & State 
 Following the [State and Jetpack Compose](https://developer.android.com/jetpack/compose/state) guidelines, the example shows how to bind the View and probe's state changes using the observables updated by the [`DevicesViewModel`](app/src/main/java/inc/combustion/example/devices/DevicesViewModel.kt).  See the [`DevicesScreen`](app/src/main/java/inc/combustion/example/devices/DevicesScreen.kt), [`ProbeState`](app/src/main/java/inc/combustion/example/devices/ProbeState.kt) and [`DevicesScreenState`](app/src/main/java/inc/combustion/example/devices/DevicesScreenState.kt) classes for more details on:
 * How to display the real-time temperature updates of a probe.
+* How to display Instant Read temperature from the probe.
+* How to display probe color and ID values.
 * How to monitor the upload progress of a record transfer from a probe.
 * How to display a list of all discovered probes.
-* How to display static properties of a probe, such as serial number and firmware version.
+* How to display static properties of a probe, such as serial number, firmware version and hardware revision.
 * How to display dynamic BLE properties of a probe, such as connection state and RSSI.
 
-<p align="center">  
-<img src="https://github.com/combustion-inc/combustion-android-example/blob/main/docs/screenshot.png" width=40% height=40%>
-</p>
+### Service Lifecycle
+The `DeviceManager` class in the framework manages the lifecycle of the `CombustionService`.  The following are lifecycle guidelines for managing the service. 
+* Call `startCombustionService` at the point that you want to start consuming the API, for instance from `onCreate` in your launcher activity.
+* Call `bindCombustionService` at least once, after `startCombustionService` to establish the connection.
+* If the `DeviceManager` is used across multiple lifecycle components, each component should call `bindCombustionService` when created and `unbindCombustionService` when destroyed.
+* The `DeviceManager` maintains a reference count on bindings.  After first binding, it will automatically unbind the singleton connection when the reference count reaches 0.
+* You can call `stopCombustionService` to reset the reference count to 0 and stop the service.  This will bring the lifecycle to initial state and the earlier steps still apply.
+
 
 ## Reporting Issues
 Your feedback is important.  For reporting issues use the [issue tracker](https://github.com/combustion-inc/combustion-android-example/issues).  
