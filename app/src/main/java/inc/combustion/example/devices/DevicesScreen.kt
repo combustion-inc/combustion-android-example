@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +47,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import inc.combustion.example.R
 import inc.combustion.framework.service.DeviceManager
+import inc.combustion.engineering.ui.components.SingleSelectDialog
+import inc.combustion.framework.service.ProbeID
+import inc.combustion.framework.service.ProbeColor
 
 @Composable
 fun DevicesScreen(
@@ -58,22 +62,60 @@ fun DevicesScreen(
         probes = remember { viewModel.probes },
         onUnitsClick = { device ->
             viewModel.toggleUnits(device)
+        },
+        onBluetoothClick = { device ->
+            viewModel.toggleConnection(device)
+        },
+        onSetProbeColorClick = { serialNumber, color ->
+            viewModel.setProbeColor(serialNumber, color)
+        },
+        onSetProbeIDClick = { serialNumber, id ->
+            viewModel.setProbeID(serialNumber, id)
         }
-    ) { device ->
-        viewModel.toggleConnection(device)
-    }
+    )
 
     DevicesContent(
         noDevicesReasonString = noDevicesReasonString,
         screenState = screenState
     )
 }
+
 @Composable
 fun DevicesContent(
     noDevicesReasonString: String,
     screenState: DevicesScreenState
 ) {
     val list = screenState.probes.values.toMutableStateList()
+
+    var showProbeColorDialog by remember { mutableStateOf(false) }
+    var showProbeIDDialog by remember { mutableStateOf(false) }
+    var selectedProbeSerial by remember { mutableStateOf("") }
+
+    if (showProbeColorDialog) {
+        SingleSelectDialog(title = "Select Probe Color",
+            optionsList = ProbeColor.stringValues(),
+            defaultSelected = 0,
+            submitButtonText = "OK",
+            onSubmitButtonClick = {
+                val selectedColor = ProbeColor.fromRaw(it.toUInt())
+                screenState.onSetProbeColorClick(selectedProbeSerial, selectedColor)
+                showProbeColorDialog = false
+            },
+            onDismissRequest = { showProbeColorDialog = false })
+    }
+
+    if (showProbeIDDialog) {
+        SingleSelectDialog(title = "Select Probe ID",
+            optionsList = ProbeID.stringValues(),
+            defaultSelected = 0,
+            submitButtonText = "OK",
+            onSubmitButtonClick = {
+                val selectedID = ProbeID.fromRaw(it.toUInt())
+                screenState.onSetProbeIDClick(selectedProbeSerial, selectedID)
+                showProbeIDDialog = false
+            },
+            onDismissRequest = { showProbeIDDialog = false })
+    }
 
     if (list.size == 0) {
         Column(
@@ -126,7 +168,17 @@ fun DevicesContent(
                             probeUiState = item
                         )
                         if(troubleshootingIsVisible) {
-                            TroubleshootingDataRow(probeUiState = item)
+                            TroubleshootingDataRow(
+                                probeUiState = item,
+                                onSetProbeColorClick = {
+                                    showProbeColorDialog = true
+                                    selectedProbeSerial = item.serialNumber
+                                },
+                                onSetProbeIDClick = {
+                                    showProbeIDDialog = true
+                                    selectedProbeSerial = item.serialNumber
+                                }
+                            )
                         } else {
                             Box(modifier = Modifier.padding(8.dp))
                         }
@@ -301,13 +353,72 @@ fun TroubleshootingDataItem(
 }
 
 @Composable
-fun TroubleshootingDataRow(
-    probeUiState: ProbeState
+fun TroubleshootingButtonsItem(
+    leftLabel: String,
+    leftColor: Color,
+    leftHandler: () -> Unit,
+    rightLabel: String,
+    rightColor: Color,
+    rightHandler: () -> Unit
 ) {
+    Row(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            modifier = Modifier
+                .weight(1.0f)
+                .padding(start = 12.dp, top = 4.dp)
+                .selectable(
+                    selected = false,
+                    onClick = leftHandler
+                ),
+            color = leftColor,
+            style = MaterialTheme.typography.subtitle2,
+            textAlign = TextAlign.Left,
+            text = leftLabel
+        )
+        Text(
+            modifier = Modifier
+                .weight(1.0f)
+                .padding(end = 12.dp, top = 4.dp)
+                .selectable(
+                    selected = false,
+                    onClick = rightHandler
+                ),
+            color = rightColor,
+            style = MaterialTheme.typography.subtitle2,
+            textAlign = TextAlign.Right,
+            text = rightLabel
+        )
+    }
+}
+
+@Composable
+fun TroubleshootingDataRow(
+    probeUiState: ProbeState,
+    onSetProbeColorClick: () -> Unit,
+    onSetProbeIDClick: () -> Unit
+) {
+    val emptyHandler: () -> Unit = { }
     val color = when(probeUiState.connectionState.value) {
         ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
         else -> MaterialTheme.colors.onPrimary
     }
+
+    val setCommandColor = if(probeUiState.connectionState.value == ProbeState.ConnectionState.CONNECTED)
+        MaterialTheme.colors.onPrimary
+    else
+        MaterialTheme.colors.onSecondary
+
+    val setColorHandler = if(probeUiState.connectionState.value == ProbeState.ConnectionState.CONNECTED)
+        onSetProbeColorClick
+    else
+        emptyHandler
+
+    val setIDHandler = if(probeUiState.connectionState.value == ProbeState.ConnectionState.CONNECTED)
+        onSetProbeIDClick
+    else
+        emptyHandler
 
     Row(modifier = Modifier
         .padding(vertical = dimensionResource(id = R.dimen.large_padding))
@@ -353,6 +464,11 @@ fun TroubleshootingDataRow(
                     color = color
                 )
                 TroubleshootingDataItem(
+                    label = "Battery",
+                    value = probeUiState.batteryStatus.value,
+                    color = color
+                )
+                TroubleshootingDataItem(
                     label = "RSSI",
                     value = probeUiState.rssi.value.toString(),
                     color = color
@@ -361,6 +477,14 @@ fun TroubleshootingDataRow(
                     label = "MAC",
                     value = probeUiState.macAddress.value,
                     color = color
+                )
+                TroubleshootingButtonsItem(
+                    leftLabel = "Set Probe Color",
+                    leftColor = setCommandColor,
+                    leftHandler = setColorHandler,
+                    rightLabel = "Set Probe ID",
+                    rightColor = setCommandColor,
+                    rightHandler = setIDHandler
                 )
             }
         }

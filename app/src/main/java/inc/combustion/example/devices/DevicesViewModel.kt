@@ -33,9 +33,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import inc.combustion.example.LOG_TAG
-import inc.combustion.framework.service.DeviceDiscoveredEvent
-import inc.combustion.framework.service.ProbeUploadState
-import inc.combustion.framework.service.DeviceManager
+import inc.combustion.framework.service.*
+import inc.combustion.example.R
 import kotlinx.coroutines.launch
 import kotlin.IllegalArgumentException
 import kotlinx.coroutines.flow.*
@@ -51,7 +50,18 @@ class DevicesViewModel(
     private val deviceManager : DeviceManager,
 ) : ViewModel() {
 
+    data class SnackBarMessage(
+        var id : String,
+        var resource : Int
+    )
+
     var probes = mutableStateMapOf<String, ProbeState>()
+        private set
+
+    var isSnackBarShowing: MutableState<Boolean> = mutableStateOf(false)
+        private set
+
+    var snackBarMessage: MutableState<SnackBarMessage> = mutableStateOf(SnackBarMessage("", 0))
         private set
 
     init {
@@ -154,6 +164,40 @@ class DevicesViewModel(
     }
 
     /**
+     * ViewModel processing a color choice for a probe
+     *
+     * @param serial serial number of probe to update
+     * @param color new color value for probe
+     *
+     * @see ProbeState
+     * @see ProbeColor
+     */
+    fun setProbeColor(serial: String, color: ProbeColor) {
+        deviceManager.setProbeColor(serial, color) {
+            if(!it) {
+                showSnackBarMessage(serial, R.string.set_color_fail)
+            }
+        }
+    }
+
+    /**
+     * ViewModel processing a id choice for a probe
+     *
+     * @param serial serial number of probe to update
+     * @param id new id value for probe
+     *
+     * @see ProbeState
+     * @see ProbeID
+     */
+    fun setProbeID(serial: String, id: ProbeID) {
+        deviceManager.setProbeID(serial, id) {
+            if(!it) {
+                showSnackBarMessage(serial, R.string.set_id_fail)
+            }
+        }
+    }
+
+    /**
      * ViewModel handler for when a probe is discovered.
      *
      * @param serialNumber Serial number of the device.
@@ -191,5 +235,16 @@ class DevicesViewModel(
                 }
             }
         }
+    }
+
+    /**
+     * Create Snackbar message with given ID and String
+     *
+     * @param id to print next to message
+     * @param resource message to print in snack bar
+     */
+    private fun showSnackBarMessage(id: String, resource: Int) {
+        snackBarMessage.value = SnackBarMessage(id, resource)
+        isSnackBarShowing.value = true
     }
 }
