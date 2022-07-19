@@ -48,12 +48,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import inc.combustion.example.R
 import inc.combustion.framework.service.DeviceManager
 import inc.combustion.engineering.ui.components.SingleSelectDialog
+import inc.combustion.example.AppState
 import inc.combustion.framework.service.ProbeID
 import inc.combustion.framework.service.ProbeColor
 
 @Composable
 fun DevicesScreen(
-    noDevicesReasonString: String
+    appState: AppState
 ) {
     val viewModel : DevicesViewModel = viewModel(
         factory = DevicesViewModel.Factory(DeviceManager.instance)
@@ -75,7 +76,7 @@ fun DevicesScreen(
     )
 
     DevicesContent(
-        noDevicesReasonString = noDevicesReasonString,
+        noDevicesReasonString = appState.noDevicesReasonString,
         screenState = screenState
     )
 }

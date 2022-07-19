@@ -32,6 +32,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.bluetooth.BluetoothClass
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -40,21 +41,34 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import inc.combustion.framework.service.DeviceDiscoveredEvent
-import inc.combustion.example.theme.CombustionIncEngineeringTheme
 import inc.combustion.framework.service.DeviceManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.*
 import inc.combustion.example.devices.DevicesScreen
+import inc.combustion.example.settings.SettingsScreen
+import inc.combustion.example.theme.CombustionIncEngineeringTheme
+import inc.combustion.example.theme.Combustion_Red
 import inc.combustion.example.theme.Combustion_Yellow
 import inc.combustion.framework.service.ProbeScanner
 
@@ -225,7 +239,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         DeviceManager.bindCombustionService()
 
         setContent {
-            CombustionAppScreen(isScanning, bluetoothIsOn)
+            MainScreen(isScanning, bluetoothIsOn)
         }
     }
 
@@ -329,25 +343,5 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 perms = COMBUSTION_CONSENTING_PERMISSIONS
             )
         }
-    }
-}
-
-@Composable
-fun CombustionAppScreen(
-    isScanning: State<Boolean>,
-    bluetoothIsOn: State<Boolean>
-) {
-    CombustionIncEngineeringTheme {
-
-        var noDevicesReasonString = "Searching..."
-
-        if(!bluetoothIsOn.value) {
-            noDevicesReasonString = "Please Turn On Bluetooth..."
-        }
-        else if(!isScanning.value) {
-            noDevicesReasonString = "Please Turn On Scanning..."
-        }
-
-        DevicesScreen(noDevicesReasonString)
     }
 }
