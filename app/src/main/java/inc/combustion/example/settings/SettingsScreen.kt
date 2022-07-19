@@ -32,10 +32,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alorma.compose.settings.storage.base.SettingValueState
@@ -44,7 +47,9 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import inc.combustion.example.*
 import inc.combustion.example.R
+import inc.combustion.example.devices.DevicesList
 import inc.combustion.example.theme.CombustionIncEngineeringTheme
+import inc.combustion.example.theme.Combustion_Red
 
 
 data class SettingsScreenState(
@@ -69,7 +74,28 @@ fun SettingsScreen(
 
 @Composable
 fun SettingsContent(
-    @Suppress("UNUSED_PARAMETER") appState: AppState,
+    appState: AppState,
+    screenState: SettingsScreenState,
+) {
+    AppScaffold(
+        title = "Settings",
+        navigationIcon = {
+            IconButton(onClick = appState.navigateBack()) {
+                Icon(Icons.Filled.ArrowBack, "")
+            }
+        },
+        actionIcons = { },
+        appState = appState
+    ) {
+        SettingsList(
+            state = screenState
+        )
+    }
+}
+
+
+@Composable
+fun SettingsList(
     state: SettingsScreenState,
 ) {
     val checkedState: SettingValueState<Boolean> = rememberBooleanSettingState()
@@ -122,27 +148,5 @@ fun SettingsContent(
             }
         )
         Divider()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun Preview() {
-    CombustionIncEngineeringTheme(darkTheme = true) {
-        val appState = rememberAppState()
-        MainScreenContent (
-            appState = appState,
-            content = @Composable {
-                Column {
-                    SettingsSwitch(
-                        icon = { Icon(imageVector = Icons.Default.Refresh, contentDescription = "Play") },
-                        title = { Text(text = "Hello") },
-                        subtitle = { Text(text = "This is a longer text") },
-                        onCheckedChange = {},
-                        state = rememberBooleanSettingState(defaultValue = false)
-                    )
-                }
-            }
-        )
     }
 }

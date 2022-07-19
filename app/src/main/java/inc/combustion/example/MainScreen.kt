@@ -48,10 +48,10 @@ import inc.combustion.example.settings.SettingsScreen
 import inc.combustion.example.theme.CombustionIncEngineeringTheme
 import inc.combustion.example.theme.Combustion_Red
 
-sealed class AppScreen(val route: String) {
-    object Devices : AppScreen(route = "Devices")
-    object Details : AppScreen(route = "Details")
-    object Settings : AppScreen(route = "Settings")
+sealed class AppScreen(val route: String, val title: String) {
+    object Devices : AppScreen(route = "devices", title = "Devices")
+    object Details : AppScreen(route = "details", title = "Details")
+    object Settings : AppScreen(route = "settings", title = "Settings")
 }
 
 class AppState(
@@ -80,6 +80,18 @@ class AppState(
                 }
             }
              */
+        }
+    }
+
+    fun navigateToSettings(): () -> Unit {
+        return {
+            onNavigate(AppScreen.Settings.route)
+        }
+    }
+
+    fun navigateBack(): () -> Unit {
+        return {
+            navController.navigateUp()
         }
     }
 
@@ -128,59 +140,12 @@ fun rememberAppState(
     )
 }
 
-/*
-@Composable
-fun MainScreenContent(
-    appState: AppState,
-    content: @Composable (PaddingValues) -> Unit = { padding ->
-        appState.NavHost(Modifier.padding(padding))
-    }
-) {
-    Scaffold (
-        scaffoldState = appState.scaffoldState,
-        topBar = {
-            TopAppBar (
-                title = { Text(
-                    text = stringResource(id = R.string.app_title),
-                    color = MaterialTheme.colors.onSecondary
-                ) },
-                backgroundColor = MaterialTheme.colors.background,
-                navigationIcon = {
-                    IconButton(onClick = appState.onTopBarNavigationClick()) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                            contentDescription = stringResource(R.string.menu_button_description),
-                            tint = Combustion_Red
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = appState.onTopBarActionClick()) {
-                        Icon(
-                            tint = MaterialTheme.colors.onBackground,
-                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_settings_24),
-                            contentDescription = stringResource(id = R.string.settings_screen_title)
-                        )
-                    }
-                }
-            )
-        },
-        snackbarHost = {
-            SnackbarHost(it) { data ->
-                Snackbar(
-                    backgroundColor = MaterialTheme.colors.onPrimary,
-                    contentColor = MaterialTheme.colors.primary,
-                    snackbarData = data
-                )
-            }
-        },
-        content = content
-    )
-}
- */
 
 @Composable
-fun MainScreenContent(
+fun AppScaffold(
+    title: String,
+    navigationIcon: @Composable () -> Unit,
+    actionIcons: @Composable () -> Unit,
     appState: AppState,
     content: @Composable (PaddingValues) -> Unit = { padding ->
         appState.NavHost(Modifier.padding(padding))
@@ -189,40 +154,19 @@ fun MainScreenContent(
     Scaffold (
         scaffoldState = appState.scaffoldState,
         topBar = {
-            TopAppBar (
-                title = { Text(
-                    text = stringResource(id = R.string.app_title),
-                    color = MaterialTheme.colors.onSecondary
-                ) },
-                backgroundColor = MaterialTheme.colors.background,
-                navigationIcon = {
-                    IconButton(onClick = appState.onTopBarNavigationClick()) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                            contentDescription = stringResource(R.string.menu_button_description),
-                            tint = Combustion_Red
-                        )
-                    }
+            TopAppBar(
+                title = {
+                    Text(
+                        text = title,
+                        color = MaterialTheme.colors.onSecondary
+                    )
                 },
+                backgroundColor = MaterialTheme.colors.background,
+                navigationIcon = navigationIcon,
                 actions = {
-                    IconButton(onClick = appState.onTopBarActionClick()) {
-                        Icon(
-                            tint = MaterialTheme.colors.onBackground,
-                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_settings_24),
-                            contentDescription = stringResource(id = R.string.settings_screen_title)
-                        )
-                    }
+                    actionIcons()
                 }
             )
-        },
-        snackbarHost = {
-            SnackbarHost(it) { data ->
-                Snackbar(
-                    backgroundColor = MaterialTheme.colors.onPrimary,
-                    contentColor = MaterialTheme.colors.primary,
-                    snackbarData = data
-                )
-            }
         },
         content = content
     )
@@ -246,7 +190,8 @@ fun MainScreen(
         else {
             appState.noDevicesReasonString = "Searching..."
         }
-
-        MainScreenContent(appState = appState)
+        
+        appState.NavHost(modifier = Modifier)
+        //DevicesScreen(appState = appState)
     }
 }
