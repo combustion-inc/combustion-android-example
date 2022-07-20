@@ -41,8 +41,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import inc.combustion.example.details.DetailsScreen
 import inc.combustion.example.devices.DevicesScreen
 import inc.combustion.example.settings.SettingsScreen
 import inc.combustion.example.theme.CombustionIncEngineeringTheme
@@ -68,45 +71,33 @@ class AppState(
             modifier
         ) {
             val appState = this@AppState
-            composable(AppScreen.Settings.route) { SettingsScreen(appState) }
-            composable(AppScreen.Devices.route) { DevicesScreen(appState) }
-            /*
-            for (screen in bottomNavigationScreens) {
-                composable(screen.route) {
-                    when (screen) {
-                        is AppScreen.Devices -> DevicesScreen(appState)
-                        is AppScreen.Settings -> SettingsScreen(appState)
-                    }
-                }
+            composable(AppScreen.Settings.route) {
+                SettingsScreen(appState)
             }
-             */
+            composable(AppScreen.Devices.route) {
+                DevicesScreen(appState)
+            }
+            composable(
+                route = AppScreen.Details.route + "/{serialNumber}",
+                arguments = listOf(navArgument(name = "serialNumber") {
+                    type = NavType.StringType
+                })
+            ) { entry ->
+                DetailsScreen(appState, entry.arguments?.getString("serialNumber"))
+            }
         }
     }
 
-    fun navigateToSettings(): () -> Unit {
-        return {
-            onNavigate(AppScreen.Settings.route)
-        }
+    fun navigateToDetails(serialNumber: String) {
+        onNavigate(AppScreen.Details.route + "/$serialNumber")
     }
 
-    fun navigateBack(): () -> Unit {
-        return {
-            navController.navigateUp()
-        }
+    fun navigateToSettings() {
+        onNavigate(AppScreen.Settings.route)
     }
 
-    fun onTopBarNavigationClick(): () -> Unit {
-        return {
-            // do nothing at this point.  maybe add drawer in future.
-        }
-    }
-
-    fun onTopBarActionClick(): () -> Unit {
-        return {
-            // navigate to the composable.
-            //onNavigate(topNavigationScreen.route)
-            onNavigate(AppScreen.Settings.route)
-        }
+    fun navigateBack() {
+        navController.navigateUp()
     }
 
     private fun onNavigate(route: String) {
@@ -158,7 +149,8 @@ fun AppScaffold(
                 title = {
                     Text(
                         text = title,
-                        color = MaterialTheme.colors.onSecondary
+                        style = MaterialTheme.typography.subtitle2,
+                        color = MaterialTheme.colors.onPrimary
                     )
                 },
                 backgroundColor = MaterialTheme.colors.background,
@@ -192,6 +184,5 @@ fun MainScreen(
         }
         
         appState.NavHost(modifier = Modifier)
-        //DevicesScreen(appState = appState)
     }
 }

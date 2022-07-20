@@ -27,8 +27,10 @@
  */
 package inc.combustion.example.devices
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -237,7 +241,8 @@ data class DevicesScreenState(
     val onUnitsClick: (ProbeState) -> Unit,
     val onBluetoothClick: (ProbeState) -> Unit,
     val onSetProbeColorClick: (String, ProbeColor) -> Unit,
-    val onSetProbeIDClick: (String, ProbeID) -> Unit
+    val onSetProbeIDClick: (String, ProbeID) -> Unit,
+    val onCardClick: (String) -> Unit
 )
 
 @Composable
@@ -260,6 +265,9 @@ fun DevicesScreen(
         },
         onSetProbeIDClick = { serialNumber, id ->
             viewModel.setProbeID(serialNumber, id)
+        },
+        onCardClick = { serialNumber ->
+            appState.navigateToDetails(serialNumber)
         }
     )
 
@@ -286,7 +294,7 @@ fun DevicesContent(
             }
         },
         actionIcons = {
-            IconButton(onClick = appState.navigateToSettings()) {
+            IconButton(onClick = { appState.navigateToSettings() }) {
                 Icon(
                     tint = MaterialTheme.colors.onBackground,
                     imageVector = ImageVector.vectorResource(id = R.drawable.ic_settings_24),
@@ -303,6 +311,7 @@ fun DevicesContent(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DevicesList(
     noDevicesReasonString: String,
@@ -377,10 +386,19 @@ fun DevicesList(
                     shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner)),
                 ) {
                     var troubleshootingIsVisible by remember {
-                        mutableStateOf(true)
+                        mutableStateOf(false)
                     }
+                    val haptic = LocalHapticFeedback.current
                     Column(
-                        modifier = Modifier.clickable { troubleshootingIsVisible = !troubleshootingIsVisible }
+                        modifier = Modifier.combinedClickable(
+                            onClick = {
+                                screenState.onCardClick(item.serialNumber)
+                            },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                troubleshootingIsVisible = !troubleshootingIsVisible
+                            }
+                        )
                     ) {
                         HeaderRow(
                             probeUiState = item,

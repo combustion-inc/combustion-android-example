@@ -80,7 +80,7 @@ fun SettingsContent(
     AppScaffold(
         title = "Settings",
         navigationIcon = {
-            IconButton(onClick = appState.navigateBack()) {
+            IconButton(onClick = { appState.navigateBack() }) {
                 Icon(Icons.Filled.ArrowBack, "")
             }
         },
