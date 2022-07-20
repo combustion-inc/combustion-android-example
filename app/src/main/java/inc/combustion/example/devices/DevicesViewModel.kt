@@ -35,6 +35,7 @@ import androidx.lifecycle.viewModelScope
 import inc.combustion.example.LOG_TAG
 import inc.combustion.framework.service.*
 import inc.combustion.example.R
+import inc.combustion.example.components.ProbeState
 import kotlinx.coroutines.launch
 import kotlin.IllegalArgumentException
 import kotlinx.coroutines.flow.*
@@ -216,7 +217,7 @@ class DevicesViewModel(
             // from the service.
             viewModelScope.launch {
 
-                // Start collecting on the flow fro the probe.
+                // Start collecting on the flow for the probe.
                 deviceManager.probeFlow(serialNumber)?.collect { probe ->
 
                     // Sanity check that we are keeping track of this probe.

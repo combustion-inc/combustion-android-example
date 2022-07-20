@@ -28,5 +28,106 @@
 
 package inc.combustion.example.details
 
-class DetailsViewModel {
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import inc.combustion.example.LOG_TAG
+import inc.combustion.example.components.ProbeState
+import inc.combustion.framework.service.DeviceManager
+import inc.combustion.framework.service.ProbeColor
+import inc.combustion.framework.service.ProbeID
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+
+class DetailsViewModel (
+    val serialNumber: String,
+    private val deviceManager: DeviceManager
+) : ViewModel() {
+
+    val probe = ProbeState(serialNumber)
+
+    init {
+        viewModelScope.launch {
+            deviceManager.probeFlow(serialNumber)?.collect { it ->
+                probe.updateProbeState(it, deviceManager.recordsDownloads(serialNumber))
+
+                /*
+                if(probe.uploadState is ProbeUploadState.ProbeUploadNeeded) {
+                    deviceManager.startRecordTransfer(probe.serialNumber)
+                }
+                 */
+            }
+        }
+    }
+
+    class Factory(
+        private val deviceManager: DeviceManager,
+        private val serialNumber: String
+    ) : ViewModelProvider.Factory {
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(DetailsViewModel::class.java)) {
+                return DetailsViewModel(serialNumber, deviceManager) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+
+    /**
+     * ViewModel processing of Bluetooth Button click from the Card composable on the DevicesScreen
+     *
+     * @see ProbeState
+     */
+    fun toggleConnection() {
+        when (probe.connectionState.value) {
+            ProbeState.ConnectionState.ADVERTISING_CONNECTABLE -> {
+                deviceManager.connect(probe.serialNumber)
+            }
+            ProbeState.ConnectionState.CONNECTED -> {
+                deviceManager.disconnect(probe.serialNumber)
+            }
+            // Otherwise, we cannot change the Connect State of the device.
+            else -> {
+                Log.d(
+                    LOG_TAG,
+                    "No toggle action ${probe.serialNumber} is ${probe.connectionState.value}"
+                )
+            }
+        }
+    }
+
+    /**
+     * ViewModel processing a color choice for a probe
+     *
+     * @param color new color value for probe
+     *
+     * @see ProbeState
+     * @see ProbeColor
+     */
+    fun setProbeColor(color: ProbeColor) {
+        Log.e(LOG_TAG, "set probe color (${probe.serialNumber})")
+        deviceManager.setProbeColor(probe.serialNumber, color) {
+            if(!it) {
+                Log.e(LOG_TAG, "Failed to set probe color (${probe.serialNumber})")
+            }
+        }
+    }
+
+    /**
+     * ViewModel processing a id choice for a probe
+     *
+     * @param id new id value for probe
+     *
+     * @see ProbeState
+     * @see ProbeID
+     */
+    fun setProbeID(id: ProbeID) {
+        Log.e(LOG_TAG, "set probe ID (${probe.serialNumber})")
+        deviceManager.setProbeID(probe.serialNumber, id) {
+            if(!it) {
+                Log.e(LOG_TAG, "Failed to set probe ID (${probe.serialNumber})")
+            }
+            Log.e(LOG_TAG, "Probe Set")
+        }
+    }
 }

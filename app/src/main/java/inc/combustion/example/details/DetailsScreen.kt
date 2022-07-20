@@ -28,16 +28,22 @@
 
 package inc.combustion.example.details
 
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.Composable
-import inc.combustion.example.AppScaffold
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import inc.combustion.engineering.ui.components.SingleSelectDialog
 import inc.combustion.example.AppState
+import inc.combustion.example.components.*
+import inc.combustion.framework.service.DeviceManager
+import inc.combustion.framework.service.ProbeColor
+import inc.combustion.framework.service.ProbeID
 
 data class DetailsScreenState(
-    val serialNumber: String
+    val serialNumber: String,
+    val probeState: ProbeState,
+    val onConnectClick: () -> Unit,
+    val onSetProbeColorClick: (ProbeColor) -> Unit,
+    val onSetProbeIDClick: (ProbeID) -> Unit,
 )
 
 @Composable
@@ -45,8 +51,19 @@ fun DetailsScreen(
     appState: AppState,
     serialNumber: String?
 ) {
+    val viewModel : DetailsViewModel = viewModel(
+        factory = DetailsViewModel.Factory(
+            DeviceManager.instance,
+            serialNumber ?: "?"
+        )
+    )
+
     val screenState = DetailsScreenState(
-        serialNumber = serialNumber ?: "?"
+        serialNumber = viewModel.serialNumber,
+        probeState =  viewModel.probe,
+        onConnectClick =  { viewModel.toggleConnection() },
+        onSetProbeColorClick = { color -> viewModel.setProbeColor(color) },
+        onSetProbeIDClick = { id -> viewModel.setProbeID(id) }
     )
 
     DetailsContent(
@@ -60,16 +77,68 @@ fun DetailsContent(
     appState: AppState,
     screenState: DetailsScreenState
 ) {
+    var showProbeColorDialog by remember { mutableStateOf(false) }
+    var showProbeIDDialog by remember { mutableStateOf(false) }
+
+    if (showProbeColorDialog) {
+        SingleSelectDialog(title = "Select Probe Color",
+            optionsList = ProbeColor.stringValues(),
+            defaultSelected = 0,
+            submitButtonText = "OK",
+            onSubmitButtonClick = {
+                val selectedColor = ProbeColor.fromRaw(it.toUInt())
+                screenState.onSetProbeColorClick(selectedColor)
+                showProbeColorDialog = false
+            },
+            onDismissRequest = { showProbeColorDialog = false })
+    }
+
+    if (showProbeIDDialog) {
+        SingleSelectDialog(title = "Select Probe ID",
+            optionsList = ProbeID.stringValues(),
+            defaultSelected = 0,
+            submitButtonText = "OK",
+            onSubmitButtonClick = {
+                val selectedID = ProbeID.fromRaw(it.toUInt())
+                screenState.onSetProbeIDClick(selectedID)
+                showProbeIDDialog = false
+            },
+            onDismissRequest = { showProbeIDDialog = false })
+    }
+
     AppScaffold(
         title = screenState.serialNumber,
         navigationIcon = {
-            IconButton(onClick = { appState.navigateBack() }) {
-                Icon(Icons.Filled.ArrowBack, null)
-            }
+            BackIconButton(onClick = { appState.navigateBack() })
         },
-        actionIcons = { },
+        actionIcons = {
+            ConnectionStateButton(
+                probeState = screenState.probeState,
+                onClick = screenState.onConnectClick
+            )
+        },
         appState = appState
     ) {
-
+        if (!appState.isScanning.value || !appState.bluetoothIsOn.value) {
+            AppProgressIndicator(
+                reason = appState.noDevicesReasonString
+            )
+        } else {
+            LazyColumn {
+                item {
+                    MeasurementsCard(probeState = screenState.probeState)
+                }
+                item {
+                    HistoryCard(probeState = screenState.probeState)
+                }
+                item {
+                    SettingsCard(
+                        probeState = screenState.probeState,
+                        onSetProbeColorClick = { showProbeColorDialog = true },
+                        onSetProbeIDClick = { showProbeIDDialog = true }
+                    )
+                }
+            }
+        }
     }
 }

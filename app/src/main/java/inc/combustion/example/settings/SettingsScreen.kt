@@ -47,6 +47,8 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import inc.combustion.example.*
 import inc.combustion.example.R
+import inc.combustion.example.components.AppScaffold
+import inc.combustion.example.components.BackIconButton
 import inc.combustion.example.devices.DevicesList
 import inc.combustion.example.theme.CombustionIncEngineeringTheme
 import inc.combustion.example.theme.Combustion_Red
@@ -79,11 +81,7 @@ fun SettingsContent(
 ) {
     AppScaffold(
         title = "Settings",
-        navigationIcon = {
-            IconButton(onClick = { appState.navigateBack() }) {
-                Icon(Icons.Filled.ArrowBack, "")
-            }
-        },
+        navigationIcon = { BackIconButton(onClick = { appState.navigateBack() }) },
         actionIcons = { },
         appState = appState
     ) {

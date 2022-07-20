@@ -28,17 +28,9 @@
 
 package inc.combustion.example
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -49,7 +41,6 @@ import inc.combustion.example.details.DetailsScreen
 import inc.combustion.example.devices.DevicesScreen
 import inc.combustion.example.settings.SettingsScreen
 import inc.combustion.example.theme.CombustionIncEngineeringTheme
-import inc.combustion.example.theme.Combustion_Red
 
 sealed class AppScreen(val route: String, val title: String) {
     object Devices : AppScreen(route = "devices", title = "Devices")
@@ -60,8 +51,19 @@ sealed class AppScreen(val route: String, val title: String) {
 class AppState(
     val scaffoldState: ScaffoldState,
     val navController: NavHostController,
+    val isScanning: State<Boolean>,
+    val bluetoothIsOn: State<Boolean>
 ) {
-    var noDevicesReasonString = ""
+    val noDevicesReasonString: String
+        get() = if(!bluetoothIsOn.value) {
+                    "Please Turn On Bluetooth..."
+                }
+                else if(!isScanning.value) {
+                    "Please Turn On Scanning..."
+                }
+                else {
+                    "Searching..."
+                }
 
     @Composable
     fun NavHost(modifier: Modifier) {
@@ -119,48 +121,21 @@ class AppState(
 
 @Composable
 fun rememberAppState(
+    isScanning: State<Boolean>,
+    bluetoothIsOn: State<Boolean>,
     scaffoldState: ScaffoldState = rememberScaffoldState(),
     navController: NavHostController = rememberNavController(),
 ) = remember(
     scaffoldState,
     navController,
+    isScanning,
+    bluetoothIsOn
 ) {
     AppState(
         scaffoldState = scaffoldState,
         navController = navController,
-    )
-}
-
-
-@Composable
-fun AppScaffold(
-    title: String,
-    navigationIcon: @Composable () -> Unit,
-    actionIcons: @Composable () -> Unit,
-    appState: AppState,
-    content: @Composable (PaddingValues) -> Unit = { padding ->
-        appState.NavHost(Modifier.padding(padding))
-    }
-) {
-    Scaffold (
-        scaffoldState = appState.scaffoldState,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.subtitle2,
-                        color = MaterialTheme.colors.onPrimary
-                    )
-                },
-                backgroundColor = MaterialTheme.colors.background,
-                navigationIcon = navigationIcon,
-                actions = {
-                    actionIcons()
-                }
-            )
-        },
-        content = content
+        isScanning = isScanning,
+        bluetoothIsOn = bluetoothIsOn
     )
 }
 
@@ -171,18 +146,8 @@ fun MainScreen(
 ) {
     CombustionIncEngineeringTheme(darkTheme = true) {
 
-        val appState = rememberAppState()
+        val appState = rememberAppState(isScanning, bluetoothIsOn)
 
-        if(!bluetoothIsOn.value) {
-            appState.noDevicesReasonString = "Please Turn On Bluetooth..."
-        }
-        else if(!isScanning.value) {
-            appState.noDevicesReasonString = "Please Turn On Scanning..."
-        }
-        else {
-            appState.noDevicesReasonString = "Searching..."
-        }
-        
         appState.NavHost(modifier = Modifier)
     }
 }
