@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import inc.combustion.framework.service.DeviceConnectionState
 import inc.combustion.framework.service.Probe
+import inc.combustion.framework.service.ProbeBatteryStatus
 import inc.combustion.framework.service.ProbeUploadState
 
 /**
@@ -54,6 +55,7 @@ import inc.combustion.framework.service.ProbeUploadState
  * @property color the probe's color setting.
  * @property id the probes ID setting.
  * @property instantRead the probe's Instant Read value.
+ * @property connectionDescription friendly description of connection state
  */
 data class ProbeState(
     val serialNumber: String,
@@ -79,21 +81,22 @@ data class ProbeState(
     var color: MutableState<String> = mutableStateOf(""),
     var id: MutableState<String> = mutableStateOf(""),
     var batteryStatus: MutableState<String> = mutableStateOf(""),
-    var instantRead: MutableState<String> = mutableStateOf("")
+    var instantRead: MutableState<String> = mutableStateOf(""),
+    var connectionDescription: MutableState<String> = mutableStateOf(""),
 ) {
     enum class Units(val string: String) {
         FAHRENHEIT("Fahrenheit"),
         CELSIUS("Celsius")
     }
 
-    enum class ConnectionState(val string: String) {
-        OUT_OF_RANGE("Out of Range"),
-        ADVERTISING_CONNECTABLE("Advertising Connectable"),
-        ADVERTISING_NOT_CONNECTABLE("Advertising Not Connectable"),
-        CONNECTING("Connecting"),
-        CONNECTED("Connected"),
-        DISCONNECTING("Disconnecting"),
-        DISCONNECTED("Disconnected");
+    enum class ConnectionState {
+        OUT_OF_RANGE,
+        ADVERTISING_CONNECTABLE,
+        ADVERTISING_NOT_CONNECTABLE,
+        CONNECTING,
+        CONNECTED,
+        DISCONNECTING,
+        DISCONNECTED;
 
         companion object {
             fun fromDeviceConnectionState(state: DeviceConnectionState) : ConnectionState {
@@ -108,11 +111,6 @@ data class ProbeState(
                 }
             }
         }
-    }
-
-    enum class UploadState {
-        COMPLETE,
-        NEEDED
     }
 
     val T1 : MutableState<String> = mutableStateOf("")
@@ -138,7 +136,12 @@ data class ProbeState(
         recordsDownloaded.value = downloads
         color.value = state.color.toString()
         id.value = state.id.toString()
-        batteryStatus.value = state.batteryStatus.toString()
+
+        // convert to friendly string
+        batteryStatus.value = when(state.batteryStatus) {
+            ProbeBatteryStatus.LOW_BATTERY -> "Low"
+            ProbeBatteryStatus.OK -> "Good"
+        }
 
         instantRead.value = if(state.instantRead != null) {
             String.format("%.1f", state.instantRead?.let { convertTemperature(it) })
@@ -168,24 +171,32 @@ data class ProbeState(
             T8.value = "---"
         }
 
-
-        uploadStatus.value = if(state.uploadState is ProbeUploadState.ProbeUploadInProgress) {
-            val inProgress = state.uploadState as ProbeUploadState.ProbeUploadInProgress
-            val percent = ((inProgress.recordsTransferred.toFloat() / inProgress.recordsRequested.toFloat()) * 100.0).toInt()
-
-            "$percent% of ${inProgress.recordsRequested}"
-        }
-        else if(state.uploadState is ProbeUploadState.ProbeUploadComplete){
-            UploadState.COMPLETE.toString()
-        }
-        else {
-            UploadState.NEEDED.toString()
+        // convert to friendly string
+        uploadStatus.value = when(state.uploadState)  {
+            is ProbeUploadState.ProbeUploadInProgress -> {
+                val inProgress = state.uploadState as ProbeUploadState.ProbeUploadInProgress
+                val percent = ((inProgress.recordsTransferred.toFloat() / inProgress.recordsRequested.toFloat()) * 100.0).toInt()
+                "$percent% of ${inProgress.recordsRequested}"
+            }
+            is ProbeUploadState.ProbeUploadComplete -> "Upload Complete"
+            else -> "Please Connect"
         }
 
-        recordRange.value = if(state.connectionState == DeviceConnectionState.CONNECTED)
-            "${state.minSequence} : ${state.maxSequence}"
-        else
-            ""
+        // convert to friendly string
+        recordRange.value = when(state.connectionState) {
+            DeviceConnectionState.CONNECTED -> "${state.minSequence} : ${state.maxSequence}"
+            else -> ""
+        }
+
+        connectionDescription.value = when(state.connectionState) {
+            DeviceConnectionState.OUT_OF_RANGE -> "Not Available"
+            DeviceConnectionState.ADVERTISING_CONNECTABLE -> "Available"
+            DeviceConnectionState.ADVERTISING_NOT_CONNECTABLE -> "Not Available"
+            DeviceConnectionState.CONNECTING -> "Available"
+            DeviceConnectionState.CONNECTED -> "Connected"
+            DeviceConnectionState.DISCONNECTING -> "Connected"
+            DeviceConnectionState.DISCONNECTED -> "Disconnected"
+        }
     }
 
     /**

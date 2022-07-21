@@ -41,6 +41,9 @@ import inc.combustion.framework.service.ProbeID
 data class DetailsScreenState(
     val serialNumber: String,
     val probeState: ProbeState,
+    val measurementCardIsExpanded: MutableState<Boolean>,
+    val plotCardIsExpanded: MutableState<Boolean>,
+    val detailsCardIsExpanded: MutableState<Boolean>,
     val onConnectClick: () -> Unit,
     val onSetProbeColorClick: (ProbeColor) -> Unit,
     val onSetProbeIDClick: (ProbeID) -> Unit,
@@ -61,9 +64,12 @@ fun DetailsScreen(
     val screenState = DetailsScreenState(
         serialNumber = viewModel.serialNumber,
         probeState =  viewModel.probe,
+        measurementCardIsExpanded = appState.showMeasurements,
+        plotCardIsExpanded = appState.showPlot,
+        detailsCardIsExpanded = appState.showDetails,
         onConnectClick =  { viewModel.toggleConnection() },
         onSetProbeColorClick = { color -> viewModel.setProbeColor(color) },
-        onSetProbeIDClick = { id -> viewModel.setProbeID(id) }
+        onSetProbeIDClick = { id -> viewModel.setProbeID(id) },
     )
 
     DetailsContent(
@@ -126,16 +132,23 @@ fun DetailsContent(
         } else {
             LazyColumn {
                 item {
-                    MeasurementsCard(probeState = screenState.probeState)
-                }
-                item {
-                    HistoryCard(probeState = screenState.probeState)
-                }
-                item {
-                    SettingsCard(
+                    MeasurementsCard(
                         probeState = screenState.probeState,
+                        cardIsExpanded = screenState.measurementCardIsExpanded,
+                    )
+                }
+                item {
+                    PlotCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.plotCardIsExpanded,
+                    )
+                }
+                item {
+                    DetailsCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.detailsCardIsExpanded,
                         onSetProbeColorClick = { showProbeColorDialog = true },
-                        onSetProbeIDClick = { showProbeIDDialog = true }
+                        onSetProbeIDClick = { showProbeIDDialog = true },
                     )
                 }
             }

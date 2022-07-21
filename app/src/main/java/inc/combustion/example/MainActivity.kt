@@ -211,7 +211,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             }
 
             NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Combustion Example")
+                .setContentTitle("Combustion Inc.")
                 .setContentText("Helping make your cook more enjoyable")
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(false)

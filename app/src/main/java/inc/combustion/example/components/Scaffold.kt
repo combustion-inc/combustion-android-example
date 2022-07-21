@@ -117,7 +117,11 @@ fun BackIconButton(
     onClick: () -> Unit = { }
 ) {
     IconButton(onClick = onClick) {
-        Icon(Icons.Filled.ArrowBack, null)
+        Icon(
+            tint = MaterialTheme.colors.onBackground,
+            imageVector = Icons.Filled.ArrowBack,
+            contentDescription = null
+        )
     }
 }
 

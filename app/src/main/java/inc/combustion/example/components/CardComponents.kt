@@ -33,14 +33,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import inc.combustion.example.R
@@ -73,7 +75,7 @@ fun AppProgressIndicator(
 }
 
 @Composable
-fun AppCard(
+fun ClickableAppCard(
     title: String = "",
     onClick: () -> Unit = { },
     content: @Composable () -> Unit = { }
@@ -114,13 +116,83 @@ fun AppCard(
 }
 
 @Composable
+fun ExpandableAppCard(
+    title: String = "",
+    cardIsExpanded: MutableState<Boolean>,
+    content: @Composable () -> Unit = { }
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = dimensionResource(id = R.dimen.large_padding),
+                vertical = dimensionResource(id = R.dimen.large_padding)
+            ),
+        shape = RoundedCornerShape(dimensionResource(id = R.dimen.rounded_corner)),
+    ) {
+        Column(
+            modifier = Modifier
+                .clickable(onClick = {cardIsExpanded.value = !cardIsExpanded.value})
+                .padding(
+                    horizontal = dimensionResource(id = R.dimen.large_padding),
+                    vertical = dimensionResource(id = R.dimen.large_padding)
+                )
+        ){
+            if(title != "") {
+                val icon = if(cardIsExpanded.value) {
+                    ImageVector.vectorResource(id = R.drawable.ic_keyboard_arrow_up_24)
+                } else {
+                    ImageVector.vectorResource(id = R.drawable.ic_keyboard_arrow_down_24)
+                }
+
+                Row {
+                    Text(
+                        modifier = Modifier
+                            .weight(2.0f)
+                            .align(Alignment.CenterVertically)
+                            .padding(start = 12.dp),
+                        color = MaterialTheme.colors.onPrimary,
+                        style = MaterialTheme.typography.subtitle2,
+                        textAlign = TextAlign.Left,
+                        text = title
+                    )
+                    Spacer(Modifier.weight(1.0f))
+                    Icon(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .align(Alignment.CenterVertically)
+                            .padding(end = 12.dp),
+                        tint = MaterialTheme.colors.onBackground,
+                        imageVector = icon,
+                        contentDescription = null
+                    )
+                }
+            }
+
+            if(cardIsExpanded.value) {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
+fun CardDivider() {
+    Divider(
+        color = MaterialTheme.colors.onSecondary,
+        modifier = Modifier
+            .padding(start = 12.dp, top = 8 .dp),
+    )
+}
+
+@Composable
 fun DeviceSummaryCard(
     probeState: ProbeState,
     onCardClick: () -> Unit = { },
     onConnectionClick: () -> Unit = { },
     onUnitsClick: () -> Unit = { },
 ) {
-    AppCard(
+    ClickableAppCard(
         onClick = onCardClick
     ){
         DeviceCardTitle(
@@ -129,8 +201,8 @@ fun DeviceSummaryCard(
             onUnitsClick = onUnitsClick
         )
         //AllTemperaturesMeasurements(probeState = probeState)
-        ComputedMeasurements(probeState = probeState)
-        AsynchronousDetails(probeState = probeState)
+        SummaryMeasurements(probeState = probeState)
+        SummaryDetails(probeState = probeState)
     }
 }
 
@@ -138,35 +210,35 @@ fun DeviceSummaryCard(
 fun MeasurementsCard(
     title: String = "Measurements",
     probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
 ) {
-    AppCard(title = title){
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
         SensorMeasurements(probeState = probeState)
     }
 }
 
 @Composable
-fun HistoryCard(
-    title: String = "History",
+fun PlotCard(
+    title: String = "Plot",
     probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
 ) {
     val data = remember{ mutableStateListOf<LoggedProbeDataPoint>() }
-    AppCard(title = title){
-        UploadStatusDetails(probeState = probeState)
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
         MeasurementsLineChart(plotData = data)
     }
 }
 
 @Composable
-fun SettingsCard(
-    title: String = "Settings",
+fun DetailsCard(
+    title: String = "Details",
     probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
     onSetProbeColorClick: () -> Unit = { },
     onSetProbeIDClick: () -> Unit = { }
 ) {
-    AppCard(
-        title = title
-    ){
-        ConfigurationDetails(
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
+        ProbeDetails(
             probeState = probeState,
             onSetProbeColorClick = onSetProbeColorClick,
             onSetProbeIDClick = onSetProbeIDClick
@@ -208,7 +280,7 @@ fun DeviceCardTitle(
 }
 
 @Composable
-fun ComputedMeasurements(
+fun SummaryMeasurements(
     probeState: ProbeState
 ) {
     val color = when(probeState.connectionState.value) {
@@ -217,28 +289,28 @@ fun ComputedMeasurements(
     }
 
     Row {
-        TemperatureReading(
+        CardTemperature(
             label = "Instant Read",
             value = probeState.instantRead,
             color = color,
             Modifier.weight(1.0f)
         )
-        TemperatureReading(
-            label = "Core",
+        CardTemperature(
+            label = "Tip",
             value = probeState.T1,
             color = color,
             Modifier.weight(1.0f)
         )
     }
     Row {
-        TemperatureReading(
-            label = "Surface",
+        CardTemperature(
+            label = "Body",
             value = probeState.T4,
             color = color,
             Modifier.weight(1.0f)
         )
-        TemperatureReading(
-            label = "Ambient",
+        CardTemperature(
+            label = "Handle",
             value = probeState.T8,
             color = color,
             Modifier.weight(1.0f)
@@ -256,7 +328,7 @@ fun AllTemperaturesMeasurements(
     }
 
     Row {
-        TemperatureReading(
+        CardTemperature(
             label = "Instant Read",
             value = probeState.instantRead,
             color = color,
@@ -289,59 +361,22 @@ fun SensorMeasurements(
         Pair("T8", probeState.T8 )
     )
     Row {
-        TemperatureReading(readings[0].first, readings[0].second, color, modifier.weight(1.0f))
-        TemperatureReading(readings[1].first, readings[1].second, color, modifier.weight(1.0f))
-        TemperatureReading(readings[2].first, readings[2].second, color, modifier.weight(1.0f))
-        TemperatureReading(readings[3].first, readings[3].second, color, modifier.weight(1.0f))
+        CardTemperature(readings[0].first, readings[0].second, color, modifier.weight(1.0f))
+        CardTemperature(readings[1].first, readings[1].second, color, modifier.weight(1.0f))
+        CardTemperature(readings[2].first, readings[2].second, color, modifier.weight(1.0f))
+        CardTemperature(readings[3].first, readings[3].second, color, modifier.weight(1.0f))
     }
     Row {
-        TemperatureReading(readings[4].first, readings[4].second, color, modifier.weight(1.0f))
-        TemperatureReading(readings[5].first, readings[5].second, color, modifier.weight(1.0f))
-        TemperatureReading(readings[6].first, readings[6].second, color, modifier.weight(1.0f))
-        TemperatureReading(readings[7].first, readings[7].second, color, modifier.weight(1.0f))
+        CardTemperature(readings[4].first, readings[4].second, color, modifier.weight(1.0f))
+        CardTemperature(readings[5].first, readings[5].second, color, modifier.weight(1.0f))
+        CardTemperature(readings[6].first, readings[6].second, color, modifier.weight(1.0f))
+        CardTemperature(readings[7].first, readings[7].second, color, modifier.weight(1.0f))
     }
 }
 
 
 @Composable
-fun UploadStatusDetails(
-    probeState: ProbeState
-) {
-    val color = when(probeState.connectionState.value) {
-        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
-        else -> MaterialTheme.colors.onPrimary
-    }
-
-    Row(modifier = Modifier
-        .padding(vertical = dimensionResource(id = R.dimen.large_padding))
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Column {
-                TroubleshootingDataItem(
-                    label = "Upload Status",
-                    value = probeState.uploadStatus.value,
-                    color = color
-                )
-                TroubleshootingDataItem(
-                    label = "Record Count",
-                    value = probeState.recordsDownloaded.value.toString(),
-                    color = color
-                )
-                TroubleshootingDataItem(
-                    label = "Record Range",
-                    value = probeState.recordRange.value,
-                    color = color
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ConfigurationDetails(
+fun ProbeDetails(
     probeState: ProbeState,
     onSetProbeColorClick: () -> Unit,
     onSetProbeIDClick: () -> Unit
@@ -375,32 +410,66 @@ fun ConfigurationDetails(
             verticalArrangement = Arrangement.Center
         ) {
             Column {
-                TroubleshootingDataItem(
-                    label = "MAC",
-                    value = probeState.macAddress.value,
+                CardDataItem(
+                    label = "Connection",
+                    value = probeState.connectionDescription.value,
                     color = color
                 )
-                TroubleshootingDataItem(
-                    label = "Firmware",
-                    value = probeState.firmwareVersion.value ?: "",
+                CardDataItem(
+                    label = "Battery",
+                    value = probeState.batteryStatus.value,
                     color = color
                 )
-                TroubleshootingDataItem(
-                    label = "Hardware",
-                    value = probeState.hardwareRevision.value ?: "",
+                CardDataItem(
+                    label = "Signal Strength",
+                    value = probeState.rssi.value.toString(),
                     color = color
                 )
-                TroubleshootingDataItem(
+                CardDivider()
+                CardDataItem(
                     label = "Color",
                     value = probeState.color.value,
                     color = color
                 )
-                TroubleshootingDataItem(
+                CardDataItem(
                     label = "ID",
                     value = probeState.id.value,
                     color = color
                 )
-                TroubleshootingButtonsItem(
+                CardDivider()
+                CardDataItem(
+                    label = "Data Upload",
+                    value = probeState.uploadStatus.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Record Count",
+                    value = probeState.recordsDownloaded.value.toString(),
+                    color = color
+                )
+                CardDataItem(
+                    label = "Record Range",
+                    value = probeState.recordRange.value,
+                    color = color
+                )
+                CardDivider()
+                CardDataItem(
+                    label = "Firmware",
+                    value = probeState.firmwareVersion.value ?: "",
+                    color = color
+                )
+                CardDataItem(
+                    label = "Hardware",
+                    value = probeState.hardwareRevision.value ?: "",
+                    color = color
+                )
+                CardDataItem(
+                    label = "MAC",
+                    value = probeState.macAddress.value,
+                    color = color
+                )
+                CardDivider()
+                CardTwoButtons(
                     leftLabel = "Set Probe Color",
                     leftColor = setCommandColor,
                     leftHandler = setColorHandler,
@@ -414,7 +483,7 @@ fun ConfigurationDetails(
 }
 
 @Composable
-fun AsynchronousDetails(
+fun SummaryDetails(
     probeState: ProbeState
 ) {
     val color = when(probeState.connectionState.value) {
@@ -430,14 +499,9 @@ fun AsynchronousDetails(
             verticalArrangement = Arrangement.Center
         ) {
             Column {
-                TroubleshootingDataItem(
+                CardDataItem(
                     label = "Battery",
                     value = probeState.batteryStatus.value,
-                    color = color
-                )
-                TroubleshootingDataItem(
-                    label = "Signal Strength",
-                    value = probeState.rssi.value.toString(),
                     color = color
                 )
             }
@@ -446,7 +510,7 @@ fun AsynchronousDetails(
 }
 
 @Composable
-fun TemperatureReading(
+fun CardTemperature(
     label: String,
     value: State<String>,
     color: Color,
@@ -469,7 +533,7 @@ fun TemperatureReading(
 }
 
 @Composable
-fun TroubleshootingDataItem(
+fun CardDataItem(
     label: String,
     value: String,
     color: Color,
@@ -497,7 +561,7 @@ fun TroubleshootingDataItem(
 }
 
 @Composable
-fun TroubleshootingButtonsItem(
+fun CardTwoButtons(
     leftLabel: String,
     leftColor: Color,
     leftHandler: () -> Unit,

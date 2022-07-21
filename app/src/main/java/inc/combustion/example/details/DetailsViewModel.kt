@@ -51,14 +51,9 @@ class DetailsViewModel (
         viewModelScope.launch {
             deviceManager.probeFlow(serialNumber)?.collect { it ->
                 probe.updateProbeState(it, deviceManager.recordsDownloads(serialNumber))
-
-                /*
-                if(probe.uploadState is ProbeUploadState.ProbeUploadNeeded) {
-                    deviceManager.startRecordTransfer(probe.serialNumber)
-                }
-                 */
             }
         }
+
     }
 
     class Factory(
@@ -72,6 +67,8 @@ class DetailsViewModel (
             throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
+
+
 
     /**
      * ViewModel processing of Bluetooth Button click from the Card composable on the DevicesScreen
