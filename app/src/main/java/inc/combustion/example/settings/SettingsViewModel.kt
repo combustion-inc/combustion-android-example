@@ -1,6 +1,6 @@
 /*
  * Project: Combustion Inc. Android Example
- * File: DevicesScreenState.kt
+ * File: SettingsViewModel.kt
  * Author: https://github.com/miwright2
  *
  * MIT License
@@ -25,26 +25,42 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package inc.combustion.example.devices
 
-import androidx.compose.runtime.snapshots.SnapshotStateMap
-import inc.combustion.framework.service.ProbeColor
-import inc.combustion.framework.service.ProbeID
+package inc.combustion.example.settings
 
-/**
- * Data object for DeviceScreen state.
- *
- * @property probes Observable map of serial number -> ProbeState.
- * @property onUnitsClick Lambda for handling click on units card button.
- * @property onBluetoothClick Lambda for handling click on Bluetooth card button.
- *
- * @see ProbeState
- * @see DevicesScreen
- */
-data class DevicesScreenState(
-    val probes: SnapshotStateMap<String, ProbeState>,
-    val onUnitsClick: (ProbeState) -> Unit,
-    val onBluetoothClick: (ProbeState) -> Unit,
-    val onSetProbeColorClick: (String, ProbeColor) -> Unit,
-    val onSetProbeIDClick: (String, ProbeID) -> Unit
-)
+import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.ViewModel
+import inc.combustion.example.BuildConfig
+import inc.combustion.example.LOG_TAG
+import inc.combustion.framework.service.DeviceManager
+
+class SettingsViewModel : ViewModel() {
+
+    val uiState by mutableStateOf(
+        SettingsScreenState(
+            isScanning = DeviceManager.instance.isScanningForDevices,
+            onScanningToggle = {
+                setScanning(it)
+            },
+            onDataCacheClear = {
+                DeviceManager.instance.clearDevices()
+            },
+            versionString = "${BuildConfig.VERSION_NAME} ${BuildConfig.BUILD_TYPE}",
+        )
+    )
+
+    private fun setScanning(toOn: Boolean): Boolean {
+        if(toOn) {
+            uiState.isScanning = DeviceManager.instance.startScanningForProbes()
+        }
+        else {
+            uiState.isScanning = DeviceManager.instance.stopScanningForProbes()
+        }
+
+        Log.d(LOG_TAG, "Scanning Setting is ${uiState.isScanning} (requested: ${toOn})")
+
+        return uiState.isScanning
+    }
+}
