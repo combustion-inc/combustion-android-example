@@ -30,20 +30,26 @@ package inc.combustion.example.details
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.viewmodel.compose.viewModel
 import inc.combustion.engineering.ui.components.SingleSelectDialog
 import inc.combustion.example.AppState
 import inc.combustion.example.components.*
 import inc.combustion.framework.service.DeviceManager
+import inc.combustion.framework.service.LoggedProbeDataPoint
 import inc.combustion.framework.service.ProbeColor
 import inc.combustion.framework.service.ProbeID
+import java.util.*
 
 data class DetailsScreenState(
     val serialNumber: String,
     val probeState: ProbeState,
+    val probeData: SnapshotStateList<LoggedProbeDataPoint> = mutableStateListOf(),
+    val probeDataStartTimestamp: MutableState<Date>,
     val measurementCardIsExpanded: MutableState<Boolean>,
     val plotCardIsExpanded: MutableState<Boolean>,
     val detailsCardIsExpanded: MutableState<Boolean>,
+    val instantReadCardIsExpanded: MutableState<Boolean>,
     val onConnectClick: () -> Unit,
     val onSetProbeColorClick: (ProbeColor) -> Unit,
     val onSetProbeIDClick: (ProbeID) -> Unit,
@@ -64,9 +70,12 @@ fun DetailsScreen(
     val screenState = DetailsScreenState(
         serialNumber = viewModel.serialNumber,
         probeState =  viewModel.probe,
+        probeData = viewModel.probeData,
+        probeDataStartTimestamp = viewModel.probeDataStartTimestamp,
         measurementCardIsExpanded = appState.showMeasurements,
         plotCardIsExpanded = appState.showPlot,
         detailsCardIsExpanded = appState.showDetails,
+        instantReadCardIsExpanded = appState.showInstantRead,
         onConnectClick =  { viewModel.toggleConnection() },
         onSetProbeColorClick = { color -> viewModel.setProbeColor(color) },
         onSetProbeIDClick = { id -> viewModel.setProbeID(id) },
@@ -132,6 +141,12 @@ fun DetailsContent(
         } else {
             LazyColumn {
                 item {
+                    InstantReadCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.instantReadCardIsExpanded,
+                    )
+                }
+                item {
                     MeasurementsCard(
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.measurementCardIsExpanded,
@@ -139,8 +154,10 @@ fun DetailsContent(
                 }
                 item {
                     PlotCard(
+                        plotData = screenState.probeData,
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.plotCardIsExpanded,
+                        plotDataStartTimestamp = screenState.probeDataStartTimestamp
                     )
                 }
                 item {

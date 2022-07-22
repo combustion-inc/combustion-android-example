@@ -37,6 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import inc.combustion.example.R
 import inc.combustion.framework.service.LoggedProbeDataPoint
+import java.util.*
 
 @Composable
 fun AppProgressIndicator(
@@ -69,6 +71,34 @@ fun AppProgressIndicator(
                 ),
             color = MaterialTheme.colors.onPrimary,
             style = MaterialTheme.typography.subtitle2,
+            text = reason
+        )
+    }
+}
+
+@Composable
+fun CardProgressIndicator(
+    reason: String
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(all = dimensionResource(id = R.dimen.large_padding)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        LinearProgressIndicator(
+            color = MaterialTheme.colors.onPrimary,
+        )
+        Text(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(
+                    horizontal = dimensionResource(id = R.dimen.large_padding),
+                    vertical = dimensionResource(id = R.dimen.small_padding)
+                ),
+            color = MaterialTheme.colors.onPrimary,
+            style = MaterialTheme.typography.body1,
             text = reason
         )
     }
@@ -132,7 +162,7 @@ fun ExpandableAppCard(
     ) {
         Column(
             modifier = Modifier
-                .clickable(onClick = {cardIsExpanded.value = !cardIsExpanded.value})
+                .clickable(onClick = { cardIsExpanded.value = !cardIsExpanded.value })
                 .padding(
                     horizontal = dimensionResource(id = R.dimen.large_padding),
                     vertical = dimensionResource(id = R.dimen.large_padding)
@@ -207,6 +237,29 @@ fun DeviceSummaryCard(
 }
 
 @Composable
+fun InstantReadCard(
+    title: String = "Instant Read",
+    probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
+) {
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ){
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                color = MaterialTheme.colors.onPrimary,
+                style = MaterialTheme.typography.h2,
+                textAlign = TextAlign.Center,
+                text = probeState.instantRead.value
+            )
+        }
+    }
+}
+
+@Composable
 fun MeasurementsCard(
     title: String = "Measurements",
     probeState: ProbeState,
@@ -220,13 +273,40 @@ fun MeasurementsCard(
 @Composable
 fun PlotCard(
     title: String = "Plot",
+    noDataDefaultReason: String = "Please Connect ...",
+    noDataUploadingReason: String = "Getting Measurements ...",
     probeState: ProbeState,
+    plotData: SnapshotStateList<LoggedProbeDataPoint>,
+    plotDataStartTimestamp: MutableState<Date>,
     cardIsExpanded: MutableState<Boolean>,
 ) {
-    val data = remember{ mutableStateListOf<LoggedProbeDataPoint>() }
+    val data = remember { plotData }
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
-        MeasurementsLineChart(plotData = data)
+        MeasurementsLineChart(
+            plotData = data, 
+            plotDataStartTimestamp = plotDataStartTimestamp,
+            noDataComposable = {
+                PlotCardNoData(
+                    defaultReason = noDataDefaultReason,
+                    uploadingReason = noDataUploadingReason,
+                    probeState = probeState
+                )
+            }
+        )
     }
+}
+
+@Composable
+fun PlotCardNoData(
+    defaultReason: String,
+    uploadingReason: String,
+    probeState: ProbeState
+) {
+    val reason = when {
+        probeState.isUploading.value -> uploadingReason
+        else -> defaultReason
+    }
+    CardProgressIndicator(reason = reason)
 }
 
 @Composable
@@ -416,7 +496,7 @@ fun ProbeDetails(
                     color = color
                 )
                 CardDataItem(
-                    label = "Battery",
+                    label = "Battery Level",
                     value = probeState.batteryStatus.value,
                     color = color
                 )
@@ -500,7 +580,7 @@ fun SummaryDetails(
         ) {
             Column {
                 CardDataItem(
-                    label = "Battery",
+                    label = "Battery Level",
                     value = probeState.batteryStatus.value,
                     color = color
                 )
@@ -543,7 +623,7 @@ fun CardDataItem(
             modifier = Modifier
                 .weight(1.0f)
                 .padding(start = 12.dp, top = 4.dp),
-            color = MaterialTheme.colors.onSecondary,
+            color = color,
             style = MaterialTheme.typography.body1,
             textAlign = TextAlign.Left,
             text = label

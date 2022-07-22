@@ -131,6 +131,8 @@ fun ConnectionStateButton(
     onClick: () -> Unit = { },
     modifier: Modifier = Modifier
 ) {
+    // TODO - Resolve UX for icon state after user feedback
+    /*
     val bluetoothIcon = when(probeState.connectionState.value) {
         ProbeState.ConnectionState.OUT_OF_RANGE -> painterResource(R.drawable.ic_bluetooth_disabled_24)
         ProbeState.ConnectionState.ADVERTISING_CONNECTABLE -> painterResource(R.drawable.ic_bluetooth_searching_24)
@@ -149,6 +151,33 @@ fun ConnectionStateButton(
         ProbeState.ConnectionState.CONNECTED -> MaterialTheme.colors.onPrimary
         ProbeState.ConnectionState.DISCONNECTING -> MaterialTheme.colors.onSecondary
         ProbeState.ConnectionState.DISCONNECTED -> MaterialTheme.colors.onPrimary
+    }
+     */
+
+    val bluetoothIcon = when(probeState.connectionState.value) {
+        // disabled bluetooth icon
+        ProbeState.ConnectionState.OUT_OF_RANGE -> painterResource(R.drawable.ic_bluetooth_disabled_24)
+        ProbeState.ConnectionState.ADVERTISING_NOT_CONNECTABLE -> painterResource(R.drawable.ic_bluetooth_disabled_24)
+
+        // regular bluetooth icon
+        ProbeState.ConnectionState.ADVERTISING_CONNECTABLE -> painterResource(R.drawable.ic_bluetooth_24)
+        ProbeState.ConnectionState.CONNECTING -> painterResource(R.drawable.ic_bluetooth_24)
+        ProbeState.ConnectionState.CONNECTED -> painterResource(R.drawable.ic_bluetooth_24)
+        ProbeState.ConnectionState.DISCONNECTING -> painterResource(R.drawable.ic_bluetooth_24)
+        ProbeState.ConnectionState.DISCONNECTED -> painterResource(R.drawable.ic_bluetooth_24)
+    }
+
+    val bluetoothIconColor = when(probeState.connectionState.value) {
+        // secondary color
+        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
+        ProbeState.ConnectionState.ADVERTISING_CONNECTABLE -> MaterialTheme.colors.onSecondary
+        ProbeState.ConnectionState.ADVERTISING_NOT_CONNECTABLE -> MaterialTheme.colors.onSecondary
+        ProbeState.ConnectionState.CONNECTING -> MaterialTheme.colors.onSecondary
+        ProbeState.ConnectionState.DISCONNECTING -> MaterialTheme.colors.onSecondary
+        ProbeState.ConnectionState.DISCONNECTED -> MaterialTheme.colors.onSecondary
+
+        // primary color
+        ProbeState.ConnectionState.CONNECTED -> MaterialTheme.colors.onPrimary
     }
 
     IconButton(

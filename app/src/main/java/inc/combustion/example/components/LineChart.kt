@@ -29,10 +29,11 @@
 package inc.combustion.example.components
 
 import android.graphics.Typeface
+import android.util.Log
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,61 +49,74 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import inc.combustion.example.databinding.LineChartBinding
 import inc.combustion.framework.service.LoggedProbeDataPoint
+import java.util.*
 
 @Composable
 fun MeasurementsLineChart(
     plotData: SnapshotStateList<LoggedProbeDataPoint>,
+    plotDataStartTimestamp: MutableState<Date>,
+    noDataComposable: @Composable () -> Unit,
     primaryColor: Int = MaterialTheme.colors.primary.toArgb(),
     onPrimaryColor: Int = MaterialTheme.colors.onPrimary.toArgb(),
-    //isPlaying: MutableState<Boolean>
 ) {
     val configuration = LocalConfiguration.current
-
     var initialized = remember{ false }
+    val dataCount = derivedStateOf {  plotData.count() }
 
-    AndroidViewBinding(
-        factory = LineChartBinding::inflate,
-        modifier = Modifier.height(
-            height = (configuration.screenWidthDp).dp
-        ),
-        update = {
-            if(!initialized) {
-                initializeChart(lineChart, primaryColor, onPrimaryColor)
-                initialized = true
-            } else {
-                val points = lineChart.data.dataSets[0].entryCount.toFloat()
-                if(plotData.count() < points) {
-                    initializeChart(lineChart, primaryColor, onPrimaryColor)
+    if(dataCount.value <= 0) {
+        noDataComposable()
+    }
+    else {
+        AndroidViewBinding(
+            factory = LineChartBinding::inflate,
+            modifier = Modifier
+                .height(height = (configuration.screenWidthDp).dp)
+                .padding(top = 8.dp),
+            update = {
+                // initialize chart
+                if(!initialized) {
+                    InitializeChart(lineChart, primaryColor, onPrimaryColor)
+                    initialized = true
                 }
 
-                for (index in 0..7) {
+                // clearing data from chart
+                if(dataCount.value < lineChart.data.dataSets[0].entryCount.toFloat())
+                    InitializeChart(lineChart, primaryColor, onPrimaryColor)
+
+                for (index in 0..7)
                     lineChart.data.dataSets[index].clear()
-                }
 
                 plotData.forEach { dataPoint ->
                     var index = 0;
+                    val elapsedTimestampMinutes = (dataPoint.timestamp.time - plotDataStartTimestamp.value.time) / 60000.0f
                     dataPoint.temperatures.values.forEach {
-                        val entry = Entry(dataPoint.sequenceNumber.toFloat(), it.toFloat())
+                        val tempInF = ((it.toFloat() * 1.8) + 32.0).toFloat()
+                        val entry = Entry(elapsedTimestampMinutes, tempInF)
                         lineChart.data.addEntry(entry, index)
                         index++
                     }
                 }
-            }
 
-            //if(isPlaying.value) {
                 lineChart.data.notifyDataChanged()
                 lineChart.notifyDataSetChanged()
-                lineChart.fitScreen()
                 lineChart.invalidate()
-            //}
-        }
-    )
+            }
+        )
+    }
 }
 
-fun initializeChart(chart: LineChart, primaryColor: Int, onPrimaryColor: Int) {
+fun InitializeChart(
+    chart: LineChart,
+    primaryColor: Int,
+    onPrimaryColor: Int
+) {
     val lineColors = listOf(
-        Color.Blue.toArgb(), Color.Cyan.toArgb(), Color.Green.toArgb(),
-        Color.Yellow.toArgb(), Color.Magenta.toArgb(), Color.Red.toArgb(),
+        Color.Blue.toArgb(),
+        Color.Cyan.toArgb(),
+        Color.Green.toArgb(),
+        Color.Yellow.toArgb(),
+        Color.Magenta.toArgb(),
+        Color.Red.toArgb(),
         Color(0xFF, 0xA5, 0x00).toArgb(),
         Color(0xFF, 0x00, 0x7F).toArgb()
     )

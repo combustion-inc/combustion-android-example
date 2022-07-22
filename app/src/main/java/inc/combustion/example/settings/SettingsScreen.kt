@@ -102,9 +102,11 @@ fun SettingsList(
     checkedState.value = state.isScanning
 
     Column {
-        val scanningSubTitle = if(checkedState.value) "Searching for probes" else "Not searching for probes"
 
+        /*
+        // TODO -- Determine if this feature should be removed.
         Divider()
+        val scanningSubTitle = if(checkedState.value) "Searching for probes" else "Not searching for probes"
         SettingsSwitch(
             icon = { Icon(imageVector = Icons.Default.Refresh, contentDescription = "BLE Scanning") },
             modifier = Modifier.background(MaterialTheme.colors.background),
@@ -115,6 +117,7 @@ fun SettingsList(
                 checkedState.value = state.onScanningToggle(it)
             }
         )
+         */
         Divider()
         SettingsMenuLink(
             icon = {

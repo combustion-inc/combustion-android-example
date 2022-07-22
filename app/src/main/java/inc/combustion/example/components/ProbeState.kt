@@ -122,6 +122,8 @@ data class ProbeState(
     val T7 : MutableState<String> = mutableStateOf("")
     val T8 : MutableState<String> = mutableStateOf("")
 
+    val isUploading = mutableStateOf(false)
+
     /**
      * Updates this data object with the state update from the DeviceManager.
      *
@@ -136,6 +138,7 @@ data class ProbeState(
         recordsDownloaded.value = downloads
         color.value = state.color.toString()
         id.value = state.id.toString()
+        isUploading.value = (state.uploadState is ProbeUploadState.ProbeUploadInProgress)
 
         // convert to friendly string
         batteryStatus.value = when(state.batteryStatus) {

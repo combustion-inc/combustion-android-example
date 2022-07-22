@@ -29,31 +29,67 @@
 package inc.combustion.example.details
 
 import android.util.Log
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import inc.combustion.example.LOG_TAG
 import inc.combustion.example.components.ProbeState
-import inc.combustion.framework.service.DeviceManager
-import inc.combustion.framework.service.ProbeColor
-import inc.combustion.framework.service.ProbeID
+import inc.combustion.framework.service.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.util.*
 
 class DetailsViewModel (
     val serialNumber: String,
     private val deviceManager: DeviceManager
 ) : ViewModel() {
 
+    private var collectJob: Job? = null
+
     val probe = ProbeState(serialNumber)
+    val probeData = mutableStateListOf<LoggedProbeDataPoint>()
+    val probeDataStartTimestamp = mutableStateOf(Date())
 
     init {
         viewModelScope.launch {
             deviceManager.probeFlow(serialNumber)?.collect { it ->
-                probe.updateProbeState(it, deviceManager.recordsDownloads(serialNumber))
+                val recordCount = deviceManager.recordsDownloaded(serialNumber)
+
+                probe.updateProbeState(it, recordCount)
+
+                if(it.uploadState is ProbeUploadState.ProbeUploadComplete) {
+                    if(collectJob == null) {
+                        probeData.clear()
+                        probeDataStartTimestamp.value = deviceManager.logStartTimestampForDevice(serialNumber)
+
+                        val flow = deviceManager.createLogFlowForDevice(serialNumber)
+                        collectJob = viewModelScope.launch {
+                            flow.collect { log ->
+                                val seconds = (log.timestamp.time - probeDataStartTimestamp.value.time) / 1000.0f
+                                probeData.add(log)
+                            }
+                        }
+                    }
+                }
+                else if(it.uploadState !is ProbeUploadState.ProbeUploadInProgress) {
+                    collectJob?.cancel()
+                    collectJob = null
+
+                    if (recordCount > probeData.count()){
+                        probeData.clear()
+                        probeDataStartTimestamp.value = deviceManager.logStartTimestampForDevice(serialNumber)
+
+                        val logs = deviceManager.exportLogsForDevice(serialNumber)
+                        logs?.let {
+                            probeData.addAll(logs)
+                        }
+                    }
+                }
             }
         }
-
     }
 
     class Factory(
