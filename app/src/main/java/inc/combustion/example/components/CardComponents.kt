@@ -207,6 +207,16 @@ fun ExpandableAppCard(
 }
 
 @Composable
+fun DataColor(
+    probeState: ProbeState
+) : Color {
+    return when(probeState.connectionState.value) {
+        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
+        else -> MaterialTheme.colors.onPrimary
+    }
+}
+
+@Composable
 fun CardDivider() {
     Divider(
         color = MaterialTheme.colors.onSecondary,
@@ -242,6 +252,8 @@ fun InstantReadCard(
     probeState: ProbeState,
     cardIsExpanded: MutableState<Boolean>,
 ) {
+    val color = DataColor(probeState = probeState)
+
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -250,7 +262,7 @@ fun InstantReadCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterVertically),
-                color = MaterialTheme.colors.onPrimary,
+                color = color,
                 style = MaterialTheme.typography.h2,
                 textAlign = TextAlign.Center,
                 text = probeState.instantRead.value
@@ -363,10 +375,7 @@ fun DeviceCardTitle(
 fun SummaryMeasurements(
     probeState: ProbeState
 ) {
-    val color = when(probeState.connectionState.value) {
-        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
-        else -> MaterialTheme.colors.onPrimary
-    }
+    val color = DataColor(probeState = probeState)
 
     Row {
         CardTemperature(
@@ -384,7 +393,7 @@ fun SummaryMeasurements(
     }
     Row {
         CardTemperature(
-            label = "Body",
+            label = "Middle",
             value = probeState.T4,
             color = color,
             Modifier.weight(1.0f)
@@ -402,10 +411,7 @@ fun SummaryMeasurements(
 fun AllTemperaturesMeasurements(
     probeState: ProbeState
 ) {
-    val color = when(probeState.connectionState.value) {
-        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
-        else -> MaterialTheme.colors.onPrimary
-    }
+    val color = DataColor(probeState = probeState)
 
     Row {
         CardTemperature(
@@ -425,10 +431,7 @@ fun SensorMeasurements(
     probeState: ProbeState,
     modifier: Modifier = Modifier
 ) {
-    val color = when(probeState.connectionState.value) {
-        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
-        else -> MaterialTheme.colors.onPrimary
-    }
+    val color = DataColor(probeState = probeState)
 
     val readings = arrayOf(
         Pair("T1", probeState.T1 ),
@@ -462,10 +465,7 @@ fun ProbeDetails(
     onSetProbeIDClick: () -> Unit
 ) {
     val emptyHandler: () -> Unit = { }
-    val color = when(probeState.connectionState.value) {
-        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
-        else -> MaterialTheme.colors.onPrimary
-    }
+    val color = DataColor(probeState = probeState)
 
     val setCommandColor = if(probeState.connectionState.value == ProbeState.ConnectionState.CONNECTED)
         MaterialTheme.colors.onPrimary
@@ -566,10 +566,7 @@ fun ProbeDetails(
 fun SummaryDetails(
     probeState: ProbeState
 ) {
-    val color = when(probeState.connectionState.value) {
-        ProbeState.ConnectionState.OUT_OF_RANGE -> MaterialTheme.colors.onSecondary
-        else -> MaterialTheme.colors.onPrimary
-    }
+    val color = DataColor(probeState = probeState)
 
     Row(modifier = Modifier
         .padding(vertical = dimensionResource(id = R.dimen.large_padding))
