@@ -27,8 +27,13 @@ The example uses [Jetpack Compose](https://developer.android.com/jetpack/compose
 
 The example shows how to use the `Flow` instances produced by the library to handle and present probe data and state updates to your user.  If you are looking for more information on how to use our library or the API, head over to the [combustion-android-ble](https://github.com/combustion-inc/combustion-android-ble) repo.
 
-## Example
+## The Application
+This example is a fully functional mobile app that interacts with Combustion devices.  The app generally follows a list/details information architecture and is organized as follows:
+- Devices Screen: The main screen on launch, it shows a card for each device that has been discovered and displays summary measurements in real-time for the device (e.g. instant read, handle, etc.)
+- Details Screen: Includes cards for instant read, sensor measurements, line plotting of temperature measurements, and details on the device's configuration and state.
+- Settings Screen: For global app settings.
 
+## Example Use-Cases
 ### Initialization & Setup
 The example uses a single [`Activity`](https://developer.android.com/guide/components/activities/intro-activities).  See the source comments in [`MainActivity`](app/src/main/java/inc/combustion/example/MainActivity.kt) for a walk-through of the following:
 * How to initialize the library and start Combustion's Android Service.
@@ -48,7 +53,7 @@ The example uses a [`ViewModel`](https://developer.android.com/topic/libraries/a
 * How to dependency inject the `DeviceManager` instance into a `ViewModel` for easier unit testing.
 
 ### Displaying Data & State 
-Following the [State and Jetpack Compose](https://developer.android.com/jetpack/compose/state) guidelines, the example shows how to bind the View and probe's state changes using the observables updated by the [`DevicesViewModel`](app/src/main/java/inc/combustion/example/devices/DevicesViewModel.kt).  See the [`DevicesScreen`](app/src/main/java/inc/combustion/example/devices/DevicesScreen.kt), [`ProbeState`](app/src/main/java/inc/combustion/example/devices/ProbeState.kt) and [`DevicesScreenState`](app/src/main/java/inc/combustion/example/devices/DevicesScreenState.kt) classes for more details on:
+Following the [State and Jetpack Compose](https://developer.android.com/jetpack/compose/state) guidelines, the example shows how to bind the View and probe's state changes using the observables updated by the [`DevicesViewModel`](app/src/main/java/inc/combustion/example/devices/DevicesViewModel.kt).  See the [`DevicesScreen`](app/src/main/java/inc/combustion/example/devices/DevicesScreen.kt), [`ProbeState`](app/src/main/java/inc/combustion/example/components/ProbeState.kt) and [`DevicesScreenState`](app/src/main/java/inc/combustion/example/devices/DevicesScreenState.kt) classes for more details on:
 * How to display the real-time temperature updates of a probe.
 * How to display Instant Read temperature from the probe.
 * How to display probe color and ID values.

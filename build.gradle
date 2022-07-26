@@ -23,7 +23,6 @@ buildscript {
         mpandroidchart_version = 'v3.1.0'
         viewbinding_version = '1.1.0'
         combustion_framework_version = 'develop-SNAPSHOT'
-
     }
     repositories {
         google()
