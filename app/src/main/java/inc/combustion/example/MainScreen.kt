@@ -56,6 +56,7 @@ class AppState(
     val navController: NavHostController,
     val isScanning: State<Boolean>,
     val bluetoothIsOn: State<Boolean>,
+    val onShareTextData: (String, String) -> Unit,
     val showMeasurements: MutableState<Boolean> = mutableStateOf(true),
     val showPlot: MutableState<Boolean> = mutableStateOf(true),
     val showDetails: MutableState<Boolean> = mutableStateOf(false),
@@ -131,17 +132,20 @@ class AppState(
 fun rememberAppState(
     isScanning: State<Boolean>,
     bluetoothIsOn: State<Boolean>,
+    onShareTextData: (String, String) -> Unit,
     scaffoldState: ScaffoldState = rememberScaffoldState(),
     navController: NavHostController = rememberNavController(),
 ) = remember(
     scaffoldState,
     navController,
     isScanning,
+    onShareTextData,
     bluetoothIsOn
 ) {
     AppState(
         scaffoldState = scaffoldState,
         navController = navController,
+        onShareTextData = onShareTextData,
         isScanning = isScanning,
         bluetoothIsOn = bluetoothIsOn
     )
@@ -150,11 +154,12 @@ fun rememberAppState(
 @Composable
 fun MainScreen(
     isScanning: State<Boolean>,
-    bluetoothIsOn: State<Boolean>
+    bluetoothIsOn: State<Boolean>,
+    onShareTextData: (String, String) -> Unit
 ) {
     CombustionIncEngineeringTheme(darkTheme = true) {
 
-        val appState = rememberAppState(isScanning, bluetoothIsOn)
+        val appState = rememberAppState(isScanning, bluetoothIsOn, onShareTextData)
 
         appState.NavHost(modifier = Modifier)
     }

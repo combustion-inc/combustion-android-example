@@ -28,9 +28,13 @@
 
 package inc.combustion.example.details
 
+import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.FileProvider.getUriForFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -40,6 +44,8 @@ import inc.combustion.framework.service.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.util.*
 
 class DetailsViewModel (
@@ -160,7 +166,10 @@ class DetailsViewModel (
             if(!it) {
                 Log.e(LOG_TAG, "Failed to set probe ID (${probe.serialNumber})")
             }
-            Log.e(LOG_TAG, "Probe Set")
         }
+    }
+
+    fun getShareData(): Pair<String, String> {
+        return "ProbeTest.csv" to "col1,col2,col3,col4"
     }
 }

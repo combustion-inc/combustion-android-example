@@ -53,6 +53,7 @@ data class DetailsScreenState(
     val onConnectClick: () -> Unit,
     val onSetProbeColorClick: (ProbeColor) -> Unit,
     val onSetProbeIDClick: (ProbeID) -> Unit,
+    val onShareClick: () -> Unit,
 )
 
 @Composable
@@ -79,6 +80,10 @@ fun DetailsScreen(
         onConnectClick =  { viewModel.toggleConnection() },
         onSetProbeColorClick = { color -> viewModel.setProbeColor(color) },
         onSetProbeIDClick = { id -> viewModel.setProbeID(id) },
+        onShareClick = {
+            val (fileName, fileData) = viewModel.getShareData()
+            appState.onShareTextData(fileName, fileData)
+        }
     )
 
     DetailsContent(
@@ -127,6 +132,7 @@ fun DetailsContent(
             BackIconButton(onClick = { appState.navigateBack() })
         },
         actionIcons = {
+            BackIconButton(onClick = { screenState.onShareClick() })
             ConnectionStateButton(
                 probeState = screenState.probeState,
                 onClick = screenState.onConnectClick
