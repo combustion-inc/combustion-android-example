@@ -31,34 +31,24 @@ package inc.combustion.example.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.alorma.compose.settings.storage.base.rememberBooleanSettingState
 import com.alorma.compose.settings.ui.SettingsMenuLink
-import com.alorma.compose.settings.ui.SettingsSwitch
 import inc.combustion.example.*
 import inc.combustion.example.R
 import inc.combustion.example.components.AppScaffold
 import inc.combustion.example.components.BackIconButton
-import inc.combustion.example.devices.DevicesList
-import inc.combustion.example.theme.CombustionIncEngineeringTheme
-import inc.combustion.example.theme.Combustion_Red
-
 
 data class SettingsScreenState(
     var isScanning: Boolean,
     val onScanningToggle: (Boolean) -> Boolean,
     var onDataCacheClear: () -> Unit,
     val versionString: String,
+    val frameworkVersionString: String
 )
 
 @Composable
@@ -97,12 +87,10 @@ fun SettingsList(
     state: SettingsScreenState,
 ) {
     val checkedState: SettingValueState<Boolean> = rememberBooleanSettingState()
-    val versionString: String = remember{ state.versionString }
 
     checkedState.value = state.isScanning
 
     Column {
-
         /*
         // TODO -- Determine if this feature should be removed.
         Divider()
@@ -143,10 +131,21 @@ fun SettingsList(
             },
             modifier = Modifier.background(MaterialTheme.colors.background),
             title = { Text(text = "App Version") },
-            subtitle = { Text(text = versionString) },
-            onClick = {
-                // do nothing
-            }
+            subtitle = { Text(text = state.versionString) },
+            onClick = { }
+        )
+        Divider()
+        SettingsMenuLink(
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_chevron_right_24),
+                    contentDescription = null
+                )
+            },
+            modifier = Modifier.background(MaterialTheme.colors.background),
+            title = { Text(text = "Framework Version") },
+            subtitle = { Text(text = state.frameworkVersionString) },
+            onClick = { }
         )
         Divider()
     }

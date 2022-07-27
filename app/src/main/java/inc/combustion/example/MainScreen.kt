@@ -31,7 +31,6 @@ package inc.combustion.example
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -39,11 +38,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import inc.combustion.example.details.DetailsScreen
-import inc.combustion.example.details.DetailsViewModel
 import inc.combustion.example.devices.DevicesScreen
 import inc.combustion.example.settings.SettingsScreen
 import inc.combustion.example.theme.CombustionIncEngineeringTheme
-import inc.combustion.framework.service.DeviceManager
 
 sealed class AppScreen(val route: String, val title: String) {
     object Devices : AppScreen(route = "devices", title = "Devices")

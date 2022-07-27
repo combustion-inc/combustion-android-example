@@ -532,6 +532,11 @@ fun ProbeDetails(
                     value = probeState.recordRange.value,
                     color = color
                 )
+                CardDataItem(
+                    label = "Sample Period",
+                    value = probeState.samplePeriod.value,
+                    color = color
+                )
                 CardDivider()
                 CardDataItem(
                     label = "Firmware",
