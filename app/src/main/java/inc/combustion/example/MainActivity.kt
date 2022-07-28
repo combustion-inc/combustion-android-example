@@ -37,26 +37,26 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.core.app.NotificationCompat
+import androidx.core.content.FileProvider.getUriForFile
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import inc.combustion.framework.service.DeviceDiscoveredEvent
-import inc.combustion.example.theme.CombustionIncEngineeringTheme
 import inc.combustion.framework.service.DeviceManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.*
-import inc.combustion.example.devices.DevicesScreen
 import inc.combustion.example.theme.Combustion_Yellow
 import inc.combustion.framework.service.ProbeScanner
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
@@ -197,7 +197,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             }
 
             NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Combustion Example")
+                .setContentTitle("Combustion Inc.")
                 .setContentText("Helping make your cook more enjoyable")
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(false)
@@ -225,7 +225,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         DeviceManager.bindCombustionService()
 
         setContent {
-            CombustionAppScreen(isScanning, bluetoothIsOn)
+            MainScreen(isScanning, bluetoothIsOn) { fileName, fileData -> shareTextData(fileName, fileData) }
         }
     }
 
@@ -330,24 +330,43 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             )
         }
     }
-}
 
-@Composable
-fun CombustionAppScreen(
-    isScanning: State<Boolean>,
-    bluetoothIsOn: State<Boolean>
-) {
-    CombustionIncEngineeringTheme {
+    /**
+     * Given the passed in CSV data, this function saves the data to disk and creates an intent
+     * so that it can be shared to other applications.
+     *
+     * @param fileName Suggested file name
+     * @param fileData The data to be saved to the file and then shared.
+     */
+    private fun shareTextData(fileName: String, fileData: String) {
+        try {
+            val myPath = File(filesDir, "csv")
+            if (!myPath.exists()) {
+                myPath.mkdir()
+            }
+            val myFile = File(myPath, fileName)
 
-        var noDevicesReasonString = "Searching..."
+            // write the file here, e.g.
+            FileOutputStream(myFile).use { stream ->
+                stream.write(fileData.toByteArray())
+            }
 
-        if(!bluetoothIsOn.value) {
-            noDevicesReasonString = "Please Turn On Bluetooth..."
+            // here, com.example.myapp.fileprovider should match the file provider in your manifest
+            val contentUri = getUriForFile(
+                applicationContext,
+                "inc.combustion.example.fileprovider",
+                myFile
+            )
+
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            intent.setDataAndType(contentUri, "text/plain")
+            intent.putExtra(Intent.EXTRA_STREAM, contentUri);
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.d(LOG_TAG, "Writing csv failed: $e")
+            val toast = Toast.makeText(this.applicationContext, "Unable to Share Data", Toast.LENGTH_LONG)
+            toast.show()
         }
-        else if(!isScanning.value) {
-            noDevicesReasonString = "Please Turn On Scanning..."
-        }
-
-        DevicesScreen(noDevicesReasonString)
     }
 }
