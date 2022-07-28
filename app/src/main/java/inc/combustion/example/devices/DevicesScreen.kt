@@ -124,39 +124,3 @@ fun DevicesContent(
         }
     }
 }
-
-@Composable
-fun DevicesList(
-    noDevicesReasonString: String,
-    screenState: DevicesScreenState
-) {
-    var showProbeColorDialog by remember { mutableStateOf(false) }
-    var showProbeIDDialog by remember { mutableStateOf(false) }
-    var selectedProbeSerial by remember { mutableStateOf("") }
-
-    if (showProbeColorDialog) {
-        SingleSelectDialog(title = "Select Probe Color",
-            optionsList = ProbeColor.stringValues(),
-            defaultSelected = 0,
-            submitButtonText = "OK",
-            onSubmitButtonClick = {
-                val selectedColor = ProbeColor.fromRaw(it.toUInt())
-                screenState.onSetProbeColorClick(selectedProbeSerial, selectedColor)
-                showProbeColorDialog = false
-            },
-            onDismissRequest = { showProbeColorDialog = false })
-    }
-
-    if (showProbeIDDialog) {
-        SingleSelectDialog(title = "Select Probe ID",
-            optionsList = ProbeID.stringValues(),
-            defaultSelected = 0,
-            submitButtonText = "OK",
-            onSubmitButtonClick = {
-                val selectedID = ProbeID.fromRaw(it.toUInt())
-                screenState.onSetProbeIDClick(selectedProbeSerial, selectedID)
-                showProbeIDDialog = false
-            },
-            onDismissRequest = { showProbeIDDialog = false })
-    }
-}
