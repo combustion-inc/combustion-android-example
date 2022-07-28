@@ -101,3 +101,5 @@ app/src/main/java/inc/combustion/example/theme/local.properties
 .externalNativeBuild
 .cxx
 
+
+.idea/misc.xml

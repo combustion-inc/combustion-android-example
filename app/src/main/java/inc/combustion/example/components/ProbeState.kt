@@ -83,6 +83,7 @@ data class ProbeState(
     var batteryStatus: MutableState<String> = mutableStateOf(""),
     var instantRead: MutableState<String> = mutableStateOf(""),
     var connectionDescription: MutableState<String> = mutableStateOf(""),
+    var samplePeriod: MutableState<String> = mutableStateOf("0.0")
 ) {
     enum class Units(val string: String) {
         FAHRENHEIT("Fahrenheit"),
@@ -139,6 +140,12 @@ data class ProbeState(
         color.value = state.color.toString()
         id.value = state.id.toString()
         isUploading.value = (state.uploadState is ProbeUploadState.ProbeUploadInProgress)
+
+        samplePeriod.value = if(state.sessionInfo != null) {
+            String.format("%d ms", state.sessionInfo?.let { it.samplePeriod.toLong() } )
+        } else {
+            ""
+        }
 
         // convert to friendly string
         batteryStatus.value = when(state.batteryStatus) {

@@ -32,45 +32,31 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.bluetooth.BluetoothClass
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.NotificationCompat
+import androidx.core.content.FileProvider.getUriForFile
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import inc.combustion.framework.service.DeviceDiscoveredEvent
 import inc.combustion.framework.service.DeviceManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.*
-import inc.combustion.example.devices.DevicesScreen
-import inc.combustion.example.settings.SettingsScreen
-import inc.combustion.example.theme.CombustionIncEngineeringTheme
-import inc.combustion.example.theme.Combustion_Red
 import inc.combustion.example.theme.Combustion_Yellow
 import inc.combustion.framework.service.ProbeScanner
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
@@ -239,7 +225,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         DeviceManager.bindCombustionService()
 
         setContent {
-            MainScreen(isScanning, bluetoothIsOn)
+            MainScreen(isScanning, bluetoothIsOn) { fileName, fileData -> shareTextData(fileName, fileData) }
         }
     }
 
@@ -342,6 +328,45 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 requestCode = COMBUSTION_PERMISSIONS_REQUEST,
                 perms = COMBUSTION_CONSENTING_PERMISSIONS
             )
+        }
+    }
+
+    /**
+     * Given the passed in CSV data, this function saves the data to disk and creates an intent
+     * so that it can be shared to other applications.
+     *
+     * @param fileName Suggested file name
+     * @param fileData The data to be saved to the file and then shared.
+     */
+    private fun shareTextData(fileName: String, fileData: String) {
+        try {
+            val myPath = File(filesDir, "csv")
+            if (!myPath.exists()) {
+                myPath.mkdir()
+            }
+            val myFile = File(myPath, fileName)
+
+            // write the file here, e.g.
+            FileOutputStream(myFile).use { stream ->
+                stream.write(fileData.toByteArray())
+            }
+
+            // here, com.example.myapp.fileprovider should match the file provider in your manifest
+            val contentUri = getUriForFile(
+                applicationContext,
+                "inc.combustion.example.fileprovider",
+                myFile
+            )
+
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            intent.setDataAndType(contentUri, "text/plain")
+            intent.putExtra(Intent.EXTRA_STREAM, contentUri);
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.d(LOG_TAG, "Writing csv failed: $e")
+            val toast = Toast.makeText(this.applicationContext, "Unable to Share Data", Toast.LENGTH_LONG)
+            toast.show()
         }
     }
 }

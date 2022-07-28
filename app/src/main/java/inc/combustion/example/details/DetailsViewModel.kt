@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import inc.combustion.example.BuildConfig
 import inc.combustion.example.LOG_TAG
 import inc.combustion.example.components.ProbeState
 import inc.combustion.framework.service.*
@@ -68,7 +69,6 @@ class DetailsViewModel (
                         val flow = deviceManager.createLogFlowForDevice(serialNumber)
                         collectJob = viewModelScope.launch {
                             flow.collect { log ->
-                                val seconds = (log.timestamp.time - probeDataStartTimestamp.value.time) / 1000.0f
                                 probeData.add(log)
                             }
                         }
@@ -104,8 +104,6 @@ class DetailsViewModel (
         }
     }
 
-
-
     /**
      * ViewModel processing of Bluetooth Button click from the Card composable on the DevicesScreen
      *
@@ -138,7 +136,6 @@ class DetailsViewModel (
      * @see ProbeColor
      */
     fun setProbeColor(color: ProbeColor) {
-        Log.e(LOG_TAG, "set probe color (${probe.serialNumber})")
         deviceManager.setProbeColor(probe.serialNumber, color) {
             if(!it) {
                 Log.e(LOG_TAG, "Failed to set probe color (${probe.serialNumber})")
@@ -155,12 +152,22 @@ class DetailsViewModel (
      * @see ProbeID
      */
     fun setProbeID(id: ProbeID) {
-        Log.e(LOG_TAG, "set probe ID (${probe.serialNumber})")
         deviceManager.setProbeID(probe.serialNumber, id) {
             if(!it) {
                 Log.e(LOG_TAG, "Failed to set probe ID (${probe.serialNumber})")
             }
-            Log.e(LOG_TAG, "Probe Set")
         }
+    }
+
+    /**
+     * Gets the probe data as a shareable CSV file
+     *
+     * @return first: suggested file name, second: csv data.
+     */
+    fun getShareData(): Pair<String, String> {
+        val appVersionName = "${BuildConfig.APPLICATION_ID} ${BuildConfig.VERSION_NAME} ${BuildConfig.BUILD_TYPE}"
+        val (fileName, csvData) = deviceManager.exportLogsForDeviceAsCsv(probe.serialNumber, appVersionName)
+
+        return fileName to csvData
     }
 }

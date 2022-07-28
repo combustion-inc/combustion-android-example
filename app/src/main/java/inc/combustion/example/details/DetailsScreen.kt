@@ -32,7 +32,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.viewmodel.compose.viewModel
-import inc.combustion.engineering.ui.components.SingleSelectDialog
+import inc.combustion.example.components.SingleSelectDialog
 import inc.combustion.example.AppState
 import inc.combustion.example.components.*
 import inc.combustion.framework.service.DeviceManager
@@ -53,6 +53,7 @@ data class DetailsScreenState(
     val onConnectClick: () -> Unit,
     val onSetProbeColorClick: (ProbeColor) -> Unit,
     val onSetProbeIDClick: (ProbeID) -> Unit,
+    val onShareClick: () -> Unit,
 )
 
 @Composable
@@ -79,6 +80,10 @@ fun DetailsScreen(
         onConnectClick =  { viewModel.toggleConnection() },
         onSetProbeColorClick = { color -> viewModel.setProbeColor(color) },
         onSetProbeIDClick = { id -> viewModel.setProbeID(id) },
+        onShareClick = {
+            val (fileName, fileData) = viewModel.getShareData()
+            appState.onShareTextData(fileName, fileData)
+        }
     )
 
     DetailsContent(
@@ -94,6 +99,7 @@ fun DetailsContent(
 ) {
     var showProbeColorDialog by remember { mutableStateOf(false) }
     var showProbeIDDialog by remember { mutableStateOf(false) }
+    var shareIsEnabled = screenState.probeData.size > 0
 
     if (showProbeColorDialog) {
         SingleSelectDialog(title = "Select Probe Color",
@@ -127,6 +133,10 @@ fun DetailsContent(
             BackIconButton(onClick = { appState.navigateBack() })
         },
         actionIcons = {
+            ShareIconButton(
+                enable = shareIsEnabled,
+                onClick = { screenState.onShareClick() }
+            )
             ConnectionStateButton(
                 probeState = screenState.probeState,
                 onClick = screenState.onConnectClick

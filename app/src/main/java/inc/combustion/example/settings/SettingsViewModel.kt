@@ -28,12 +28,11 @@
 
 package inc.combustion.example.settings
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import inc.combustion.example.BuildConfig
-import inc.combustion.example.LOG_TAG
+import inc.combustion.framework.Combustion
 import inc.combustion.framework.service.DeviceManager
 
 class SettingsViewModel : ViewModel() {
@@ -41,26 +40,18 @@ class SettingsViewModel : ViewModel() {
     val uiState by mutableStateOf(
         SettingsScreenState(
             isScanning = DeviceManager.instance.isScanningForDevices,
-            onScanningToggle = {
-                setScanning(it)
-            },
-            onDataCacheClear = {
-                DeviceManager.instance.clearDevices()
-            },
+            onScanningToggle = { setScanning(it) },
+            onDataCacheClear = { DeviceManager.instance.clearDevices() },
             versionString = "${BuildConfig.VERSION_NAME} ${BuildConfig.BUILD_TYPE}",
+            frameworkVersionString = "${Combustion.FRAMEWORK_VERSION_NAME} ${Combustion.FRAMEWORK_BUILD_TYPE}"
         )
     )
 
     private fun setScanning(toOn: Boolean): Boolean {
-        if(toOn) {
-            uiState.isScanning = DeviceManager.instance.startScanningForProbes()
+        when {
+            toOn -> uiState.isScanning = DeviceManager.instance.startScanningForProbes()
+            else -> uiState.isScanning = DeviceManager.instance.stopScanningForProbes()
         }
-        else {
-            uiState.isScanning = DeviceManager.instance.stopScanningForProbes()
-        }
-
-        Log.d(LOG_TAG, "Scanning Setting is ${uiState.isScanning} (requested: ${toOn})")
-
         return uiState.isScanning
     }
 }
