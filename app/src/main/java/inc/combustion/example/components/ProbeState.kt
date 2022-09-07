@@ -32,10 +32,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import inc.combustion.framework.service.DeviceConnectionState
-import inc.combustion.framework.service.Probe
-import inc.combustion.framework.service.ProbeBatteryStatus
-import inc.combustion.framework.service.ProbeUploadState
+import inc.combustion.framework.service.*
 
 /**
  * State data object for a probe.  Binds the state between the DeviceScreen's ViewModel
@@ -56,6 +53,7 @@ import inc.combustion.framework.service.ProbeUploadState
  * @property id the probes ID setting.
  * @property instantRead the probe's Instant Read value.
  * @property connectionDescription friendly description of connection state
+ * @property samplePeriod: the normal data sample period
  */
 data class ProbeState(
     val serialNumber: String,
@@ -83,7 +81,10 @@ data class ProbeState(
     var batteryStatus: MutableState<String> = mutableStateOf(""),
     var instantRead: MutableState<String> = mutableStateOf(""),
     var connectionDescription: MutableState<String> = mutableStateOf(""),
-    var samplePeriod: MutableState<String> = mutableStateOf("0.0")
+    var samplePeriod: MutableState<String> = mutableStateOf("0.0"),
+    var virtualCoreSensor: MutableState<String> = mutableStateOf(""),
+    var virtualSurfaceSensor: MutableState<String> = mutableStateOf(""),
+    var hopCount: MutableState<String> = mutableStateOf("")
 ) {
     enum class Units(val string: String) {
         FAHRENHEIT("Fahrenheit"),
@@ -207,6 +208,10 @@ data class ProbeState(
             DeviceConnectionState.DISCONNECTING -> "Connected"
             DeviceConnectionState.DISCONNECTED -> "Disconnected"
         }
+
+        virtualCoreSensor.value = state.virtualSensors.virtualCoreSensor.toString()
+        virtualSurfaceSensor.value = state.virtualSensors.virtualSurfaceSensor.toString()
+        hopCount.value = state.hopCount.toString()
     }
 
     /**

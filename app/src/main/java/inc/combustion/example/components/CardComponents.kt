@@ -505,6 +505,22 @@ fun ProbeDetails(
                     value = probeState.rssi.value.toString(),
                     color = color
                 )
+                CardDataItem(
+                    label = "Network Hops",
+                    value = probeState.hopCount.value,
+                    color = color
+                )
+                CardDivider()
+                CardDataItem(
+                    label = "Estimated Core",
+                    value = probeState.virtualCoreSensor.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Estimated Surface",
+                    value = probeState.virtualSurfaceSensor.value,
+                    color = color
+                )
                 CardDivider()
                 CardDataItem(
                     label = "Color",
