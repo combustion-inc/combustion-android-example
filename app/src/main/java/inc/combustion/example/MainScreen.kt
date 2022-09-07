@@ -57,7 +57,9 @@ class AppState(
     val showMeasurements: MutableState<Boolean> = mutableStateOf(true),
     val showPlot: MutableState<Boolean> = mutableStateOf(true),
     val showDetails: MutableState<Boolean> = mutableStateOf(false),
-    val showInstantRead: MutableState<Boolean> = mutableStateOf(true)
+    val showInstantRead: MutableState<Boolean> = mutableStateOf(true),
+    val showTemperatures: MutableState<Boolean> = mutableStateOf(true),
+    val showPrediction: MutableState<Boolean> = mutableStateOf(true)
 ) {
     val noDevicesReasonString: String
         get() = if(!bluetoothIsOn.value) {

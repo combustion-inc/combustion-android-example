@@ -57,11 +57,11 @@ import inc.combustion.framework.service.*
  */
 data class ProbeState(
     val serialNumber: String,
-    var macAddress: MutableState<String> = mutableStateOf("TBD"),
-    var firmwareVersion: MutableState<String?> = mutableStateOf(null),
-    var hardwareRevision: MutableState<String?> = mutableStateOf(null),
-    var rssi: MutableState<Int> = mutableStateOf(0),
-    var temperaturesCelsius: SnapshotStateList<Double> = mutableStateListOf(
+    val macAddress: MutableState<String> = mutableStateOf("TBD"),
+    val firmwareVersion: MutableState<String?> = mutableStateOf(null),
+    val hardwareRevision: MutableState<String?> = mutableStateOf(null),
+    val rssi: MutableState<Int> = mutableStateOf(0),
+    val temperaturesCelsius: SnapshotStateList<Double> = mutableStateListOf(
         0.0,
         0.0,
         0.0,
@@ -71,20 +71,23 @@ data class ProbeState(
         0.0,
         0.0
     ),
-    var connectionState: MutableState<ConnectionState> = mutableStateOf(ConnectionState.OUT_OF_RANGE),
-    var units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT),
-    var uploadStatus: MutableState<String> = mutableStateOf(""),
-    var recordsDownloaded: MutableState<Int> = mutableStateOf(0),
-    var recordRange: MutableState<String> = mutableStateOf(""),
-    var color: MutableState<String> = mutableStateOf(""),
-    var id: MutableState<String> = mutableStateOf(""),
-    var batteryStatus: MutableState<String> = mutableStateOf(""),
-    var instantRead: MutableState<String> = mutableStateOf(""),
-    var connectionDescription: MutableState<String> = mutableStateOf(""),
-    var samplePeriod: MutableState<String> = mutableStateOf("0.0"),
-    var virtualCoreSensor: MutableState<String> = mutableStateOf(""),
-    var virtualSurfaceSensor: MutableState<String> = mutableStateOf(""),
-    var hopCount: MutableState<String> = mutableStateOf("")
+    val connectionState: MutableState<ConnectionState> = mutableStateOf(ConnectionState.OUT_OF_RANGE),
+    val units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT),
+    val uploadStatus: MutableState<String> = mutableStateOf(""),
+    val recordsDownloaded: MutableState<Int> = mutableStateOf(0),
+    val recordRange: MutableState<String> = mutableStateOf(""),
+    val color: MutableState<String> = mutableStateOf(""),
+    val id: MutableState<String> = mutableStateOf(""),
+    val batteryStatus: MutableState<String> = mutableStateOf(""),
+    val instantRead: MutableState<String> = mutableStateOf(""),
+    val connectionDescription: MutableState<String> = mutableStateOf(""),
+    val samplePeriod: MutableState<String> = mutableStateOf("0.0"),
+    val virtualCoreSensor: MutableState<String> = mutableStateOf(""),
+    val virtualSurfaceSensor: MutableState<String> = mutableStateOf(""),
+    val hopCount: MutableState<String> = mutableStateOf(""),
+    val coreTemperature: MutableState<String> = mutableStateOf(""),
+    val surfaceTemperature: MutableState<String> = mutableStateOf(""),
+    val ambientTemperature: MutableState<String> = mutableStateOf("")
 ) {
     enum class Units(val string: String) {
         FAHRENHEIT("Fahrenheit"),
@@ -180,6 +183,24 @@ data class ProbeState(
             T6.value = "---"
             T7.value = "---"
             T8.value = "---"
+        }
+
+        coreTemperature.value = state.coreTemperature?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+           "---"
+        }
+
+        surfaceTemperature.value = state.surfaceTemperature?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            "---"
+        }
+
+        ambientTemperature.value = state.ambientTemperature?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            "---"
         }
 
         // convert to friendly string

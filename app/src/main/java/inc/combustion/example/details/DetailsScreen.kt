@@ -50,6 +50,8 @@ data class DetailsScreenState(
     val plotCardIsExpanded: MutableState<Boolean>,
     val detailsCardIsExpanded: MutableState<Boolean>,
     val instantReadCardIsExpanded: MutableState<Boolean>,
+    val temperaturesCardIsExpanded: MutableState<Boolean>,
+    val predictionsCardIsExpanded: MutableState<Boolean>,
     val onConnectClick: () -> Unit,
     val onSetProbeColorClick: (ProbeColor) -> Unit,
     val onSetProbeIDClick: (ProbeID) -> Unit,
@@ -77,6 +79,8 @@ fun DetailsScreen(
         plotCardIsExpanded = appState.showPlot,
         detailsCardIsExpanded = appState.showDetails,
         instantReadCardIsExpanded = appState.showInstantRead,
+        temperaturesCardIsExpanded = appState.showTemperatures,
+        predictionsCardIsExpanded = appState.showPrediction,
         onConnectClick =  { viewModel.toggleConnection() },
         onSetProbeColorClick = { color -> viewModel.setProbeColor(color) },
         onSetProbeIDClick = { id -> viewModel.setProbeID(id) },
@@ -156,6 +160,20 @@ fun DetailsContent(
                         cardIsExpanded = screenState.instantReadCardIsExpanded,
                     )
                 }
+                item {
+                    TemperaturesCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.temperaturesCardIsExpanded,
+                    )
+                }
+                /* TODO
+                item {
+                    PredictionsCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.predictionsCardIsExpanded,
+                    )
+                }
+                 */
                 item {
                     MeasurementsCard(
                         probeState = screenState.probeState,

@@ -240,7 +240,6 @@ fun DeviceSummaryCard(
             onBluetoothClick = onConnectionClick,
             onUnitsClick = onUnitsClick
         )
-        //AllTemperaturesMeasurements(probeState = probeState)
         SummaryMeasurements(probeState = probeState)
         SummaryDetails(probeState = probeState)
     }
@@ -272,13 +271,36 @@ fun InstantReadCard(
 }
 
 @Composable
+fun TemperaturesCard(
+    title: String = "Temperatures",
+    probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
+) {
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
+        TemperatureMeasurements(probeState = probeState)
+    }
+}
+
+@Composable
 fun MeasurementsCard(
-    title: String = "Measurements",
+    title: String = "Sensors",
     probeState: ProbeState,
     cardIsExpanded: MutableState<Boolean>,
 ) {
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
         SensorMeasurements(probeState = probeState)
+    }
+}
+
+@Composable
+fun PredictionsCard(
+    title: String = "Predictions",
+    probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
+) {
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
+        // TODO
+        // SensorMeasurements(probeState = probeState)
     }
 }
 
@@ -385,22 +407,22 @@ fun SummaryMeasurements(
             Modifier.weight(1.0f)
         )
         CardTemperature(
-            label = "Tip",
-            value = probeState.T1,
+            label = "Core",
+            value = probeState.coreTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
     }
     Row {
         CardTemperature(
-            label = "Middle",
-            value = probeState.T4,
+            label = "Surface",
+            value = probeState.surfaceTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
         CardTemperature(
-            label = "Handle",
-            value = probeState.T8,
+            label = "Ambient",
+            value = probeState.ambientTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
@@ -408,22 +430,16 @@ fun SummaryMeasurements(
 }
 
 @Composable
-fun AllTemperaturesMeasurements(
-    probeState: ProbeState
+fun TemperatureMeasurements(
+    probeState: ProbeState,
+    modifier: Modifier = Modifier
 ) {
     val color = DataColor(probeState = probeState)
-
     Row {
-        CardTemperature(
-            label = "Instant Read",
-            value = probeState.instantRead,
-            color = color,
-            Modifier.weight(1.0f)
-        )
+        CardTemperature("Core", probeState.coreTemperature, color, modifier.weight(1.0f))
+        CardTemperature("Surface", probeState.surfaceTemperature, color, modifier.weight(1.0f))
+        CardTemperature("Ambient", probeState.ambientTemperature, color, modifier.weight(1.0f))
     }
-    SensorMeasurements(
-        probeState = probeState,
-    )
 }
 
 @Composable
