@@ -87,7 +87,15 @@ data class ProbeState(
     val hopCount: MutableState<String> = mutableStateOf(""),
     val coreTemperature: MutableState<String> = mutableStateOf(""),
     val surfaceTemperature: MutableState<String> = mutableStateOf(""),
-    val ambientTemperature: MutableState<String> = mutableStateOf("")
+    val ambientTemperature: MutableState<String> = mutableStateOf(""),
+    val predictionState: MutableState<String> = mutableStateOf(""),
+    val predictionMode: MutableState<String> = mutableStateOf(""),
+    val predictionType: MutableState<String> = mutableStateOf(""),
+    val setPointTemperatureC: MutableState<String> = mutableStateOf(""),
+    val heatStartTemperatureC: MutableState<String> = mutableStateOf(""),
+    val percentThroughCook: MutableState<String> = mutableStateOf(""),
+    val prediction: MutableState<String> = mutableStateOf(""),
+    val estimateCoreC: MutableState<String> = mutableStateOf("")
 ) {
     enum class Units(val string: String) {
         FAHRENHEIT("Fahrenheit"),
@@ -233,6 +241,63 @@ data class ProbeState(
         virtualCoreSensor.value = state.virtualSensors.virtualCoreSensor.toString()
         virtualSurfaceSensor.value = state.virtualSensors.virtualSurfaceSensor.toString()
         hopCount.value = state.hopCount.toString()
+
+        predictionState.value = state.predictionState?.let {
+            when(it) {
+                ProbePredictionState.PROBE_NOT_INSERTED -> "Not Inserted"
+                ProbePredictionState.PROBE_INSERTED -> "Inserted"
+                ProbePredictionState.WARMING -> "Warming"
+                ProbePredictionState.PREDICTING -> "Predicting"
+                ProbePredictionState.REMOVAL_PREDICTION_DONE -> "Ready to Remove"
+                ProbePredictionState.RESERVED_STATE_5 -> "Reserved 5"
+                ProbePredictionState.RESERVED_STATE_6 -> "Reserved 6"
+                ProbePredictionState.RESERVED_STATE_7 -> "Reserved 7"
+                ProbePredictionState.RESERVED_STATE_8 -> "Reserved 8"
+                ProbePredictionState.RESERVED_STATE_9 -> "Reserved 9"
+                ProbePredictionState.RESERVED_STATE_10 -> "Reserved 10"
+                ProbePredictionState.RESERVED_STATE_11 ->  "Reserved 11"
+                ProbePredictionState.RESERVED_STATE_12 -> "Reserved 12"
+                ProbePredictionState.RESERVED_STATE_13 -> "Reserved 13"
+                ProbePredictionState.RESERVED_STATE_14 -> "Reserved 14"
+                ProbePredictionState.UNKNOWN -> "Unknown"
+            }
+        } ?: run { "" }
+
+        predictionMode.value = state.predictionMode?.let { it.toString() } ?: run { ProbePredictionMode.NONE.toString() }
+        predictionType.value = state.predictionType?.let { it.toString() } ?: run { ProbePredictionType.NONE.toString() }
+
+        setPointTemperatureC.value = state.setPointTemperatureC?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            ""
+        }
+
+        heatStartTemperatureC.value = state.heatStartTemperatureC?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            "---"
+        }
+
+        prediction.value = state.predictionS?.let {
+            String.format("%02d:%02d", it.toInt() / 60, it.toInt() % 60)
+        } ?: run {
+            "--:--"
+        }
+
+        estimateCoreC.value = state.estimatedCoreC?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            "---"
+        }
+
+        if(state.heatStartTemperatureC != null && state.estimatedCoreC != null && state.setPointTemperatureC != null) {
+            val start = state.heatStartTemperatureC!!
+            val end = state.setPointTemperatureC!!
+            val core = state.estimatedCoreC!!
+            percentThroughCook.value = "${(((core - start) / (end - start)) * 100.0).toInt()} %"
+        } else {
+            percentThroughCook.value = ""
+        }
     }
 
     /**

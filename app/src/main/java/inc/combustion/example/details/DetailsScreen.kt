@@ -166,18 +166,10 @@ fun DetailsContent(
                         cardIsExpanded = screenState.temperaturesCardIsExpanded,
                     )
                 }
-                /* TODO
                 item {
                     PredictionsCard(
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.predictionsCardIsExpanded,
-                    )
-                }
-                 */
-                item {
-                    MeasurementsCard(
-                        probeState = screenState.probeState,
-                        cardIsExpanded = screenState.measurementCardIsExpanded,
                     )
                 }
                 item {
@@ -186,6 +178,12 @@ fun DetailsContent(
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.plotCardIsExpanded,
                         plotDataStartTimestamp = screenState.probeDataStartTimestamp
+                    )
+                }
+                item {
+                    MeasurementsCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.measurementCardIsExpanded,
                     )
                 }
                 item {

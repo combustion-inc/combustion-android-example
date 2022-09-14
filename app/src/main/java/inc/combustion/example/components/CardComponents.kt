@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import inc.combustion.example.R
 import inc.combustion.framework.service.LoggedProbeDataPoint
+import inc.combustion.framework.service.ProbePredictionMode
 import java.util.*
 
 @Composable
@@ -294,13 +295,12 @@ fun MeasurementsCard(
 
 @Composable
 fun PredictionsCard(
-    title: String = "Predictions",
+    title: String = "Prediction",
     probeState: ProbeState,
     cardIsExpanded: MutableState<Boolean>,
 ) {
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
-        // TODO
-        // SensorMeasurements(probeState = probeState)
+        PredictionDetails(probeState = probeState)
     }
 }
 
@@ -473,6 +473,45 @@ fun SensorMeasurements(
     }
 }
 
+@Composable
+fun PredictionDetails(
+    probeState: ProbeState
+) {
+    val color = DataColor(probeState = probeState)
+
+    if(probeState.connectionState.value != ProbeState.ConnectionState.CONNECTED) {
+        CardProgressIndicator(reason = "Please Connect...")
+    }
+    else {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ){
+            Text(
+                modifier = Modifier
+                    .weight(1.0f),
+                color = color,
+                style = MaterialTheme.typography.h2,
+                textAlign = TextAlign.Center,
+                text = probeState.prediction.value
+            )
+        }
+        CardDataItem(
+            label = "Cooking To",
+            value = probeState.setPointTemperatureC.value,
+            color = color
+        )
+        CardDataItem(
+            label = "Cooking State",
+            value = probeState.predictionState.value,
+            color = color
+        )
+        CardDataItem(
+            label = "Cook Progress",
+            value = probeState.percentThroughCook.value,
+            color = color
+        )
+    }
+}
 
 @Composable
 fun ProbeDetails(
@@ -535,6 +574,27 @@ fun ProbeDetails(
                 CardDataItem(
                     label = "Estimated Surface",
                     value = probeState.virtualSurfaceSensor.value,
+                    color = color
+                )
+                CardDivider()
+                CardDataItem(
+                    label = "Prediction Mode",
+                    value = probeState.predictionMode.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Prediction Type",
+                    value = probeState.predictionType.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Heat Start",
+                    value = probeState.heatStartTemperatureC.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Estimated Core",
+                    value = probeState.estimateCoreC.value,
                     color = color
                 )
                 CardDivider()
