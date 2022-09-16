@@ -54,10 +54,12 @@ class AppState(
     val isScanning: State<Boolean>,
     val bluetoothIsOn: State<Boolean>,
     val onShareTextData: (String, String) -> Unit,
-    val showMeasurements: MutableState<Boolean> = mutableStateOf(true),
-    val showPlot: MutableState<Boolean> = mutableStateOf(true),
+    val showMeasurements: MutableState<Boolean> = mutableStateOf(false),
+    val showPlot: MutableState<Boolean> = mutableStateOf(false),
     val showDetails: MutableState<Boolean> = mutableStateOf(false),
-    val showInstantRead: MutableState<Boolean> = mutableStateOf(true)
+    val showInstantRead: MutableState<Boolean> = mutableStateOf(true),
+    val showTemperatures: MutableState<Boolean> = mutableStateOf(true),
+    val showPrediction: MutableState<Boolean> = mutableStateOf(false)
 ) {
     val noDevicesReasonString: String
         get() = if(!bluetoothIsOn.value) {

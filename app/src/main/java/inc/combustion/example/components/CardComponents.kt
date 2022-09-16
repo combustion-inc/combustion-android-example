@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import inc.combustion.example.R
 import inc.combustion.framework.service.LoggedProbeDataPoint
+import inc.combustion.framework.service.ProbePredictionMode
 import java.util.*
 
 @Composable
@@ -240,7 +241,6 @@ fun DeviceSummaryCard(
             onBluetoothClick = onConnectionClick,
             onUnitsClick = onUnitsClick
         )
-        //AllTemperaturesMeasurements(probeState = probeState)
         SummaryMeasurements(probeState = probeState)
         SummaryDetails(probeState = probeState)
     }
@@ -272,13 +272,35 @@ fun InstantReadCard(
 }
 
 @Composable
+fun TemperaturesCard(
+    title: String = "Temperatures",
+    probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
+) {
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
+        TemperatureMeasurements(probeState = probeState)
+    }
+}
+
+@Composable
 fun MeasurementsCard(
-    title: String = "Measurements",
+    title: String = "Sensors",
     probeState: ProbeState,
     cardIsExpanded: MutableState<Boolean>,
 ) {
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
         SensorMeasurements(probeState = probeState)
+    }
+}
+
+@Composable
+fun PredictionsCard(
+    title: String = "Prediction",
+    probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
+) {
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
+        PredictionDetails(probeState = probeState)
     }
 }
 
@@ -385,22 +407,22 @@ fun SummaryMeasurements(
             Modifier.weight(1.0f)
         )
         CardTemperature(
-            label = "Tip",
-            value = probeState.T1,
+            label = "Core",
+            value = probeState.coreTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
     }
     Row {
         CardTemperature(
-            label = "Middle",
-            value = probeState.T4,
+            label = "Surface",
+            value = probeState.surfaceTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
         CardTemperature(
-            label = "Handle",
-            value = probeState.T8,
+            label = "Ambient",
+            value = probeState.ambientTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
@@ -408,22 +430,16 @@ fun SummaryMeasurements(
 }
 
 @Composable
-fun AllTemperaturesMeasurements(
-    probeState: ProbeState
+fun TemperatureMeasurements(
+    probeState: ProbeState,
+    modifier: Modifier = Modifier
 ) {
     val color = DataColor(probeState = probeState)
-
     Row {
-        CardTemperature(
-            label = "Instant Read",
-            value = probeState.instantRead,
-            color = color,
-            Modifier.weight(1.0f)
-        )
+        CardTemperature("Core", probeState.coreTemperature, color, modifier.weight(1.0f))
+        CardTemperature("Surface", probeState.surfaceTemperature, color, modifier.weight(1.0f))
+        CardTemperature("Ambient", probeState.ambientTemperature, color, modifier.weight(1.0f))
     }
-    SensorMeasurements(
-        probeState = probeState,
-    )
 }
 
 @Composable
@@ -457,6 +473,45 @@ fun SensorMeasurements(
     }
 }
 
+@Composable
+fun PredictionDetails(
+    probeState: ProbeState
+) {
+    val color = DataColor(probeState = probeState)
+
+    if(probeState.connectionState.value != ProbeState.ConnectionState.CONNECTED) {
+        CardProgressIndicator(reason = "Please Connect...")
+    }
+    else {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ){
+            Text(
+                modifier = Modifier
+                    .weight(1.0f),
+                color = color,
+                style = MaterialTheme.typography.h2,
+                textAlign = TextAlign.Center,
+                text = probeState.prediction.value
+            )
+        }
+        CardDataItem(
+            label = "Cooking To",
+            value = probeState.setPointTemperatureC.value,
+            color = color
+        )
+        CardDataItem(
+            label = "Cooking State",
+            value = probeState.predictionState.value,
+            color = color
+        )
+        CardDataItem(
+            label = "Cook Progress",
+            value = probeState.percentThroughCook.value,
+            color = color
+        )
+    }
+}
 
 @Composable
 fun ProbeDetails(
@@ -503,6 +558,43 @@ fun ProbeDetails(
                 CardDataItem(
                     label = "Signal Strength",
                     value = probeState.rssi.value.toString(),
+                    color = color
+                )
+                CardDataItem(
+                    label = "Network Hops",
+                    value = probeState.hopCount.value,
+                    color = color
+                )
+                CardDivider()
+                CardDataItem(
+                    label = "Estimated Core",
+                    value = probeState.virtualCoreSensor.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Estimated Surface",
+                    value = probeState.virtualSurfaceSensor.value,
+                    color = color
+                )
+                CardDivider()
+                CardDataItem(
+                    label = "Prediction Mode",
+                    value = probeState.predictionMode.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Prediction Type",
+                    value = probeState.predictionType.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Heat Start",
+                    value = probeState.heatStartTemperatureC.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Estimated Core",
+                    value = probeState.estimateCoreC.value,
                     color = color
                 )
                 CardDivider()

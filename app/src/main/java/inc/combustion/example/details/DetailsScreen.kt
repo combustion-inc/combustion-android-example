@@ -50,6 +50,8 @@ data class DetailsScreenState(
     val plotCardIsExpanded: MutableState<Boolean>,
     val detailsCardIsExpanded: MutableState<Boolean>,
     val instantReadCardIsExpanded: MutableState<Boolean>,
+    val temperaturesCardIsExpanded: MutableState<Boolean>,
+    val predictionsCardIsExpanded: MutableState<Boolean>,
     val onConnectClick: () -> Unit,
     val onSetProbeColorClick: (ProbeColor) -> Unit,
     val onSetProbeIDClick: (ProbeID) -> Unit,
@@ -77,6 +79,8 @@ fun DetailsScreen(
         plotCardIsExpanded = appState.showPlot,
         detailsCardIsExpanded = appState.showDetails,
         instantReadCardIsExpanded = appState.showInstantRead,
+        temperaturesCardIsExpanded = appState.showTemperatures,
+        predictionsCardIsExpanded = appState.showPrediction,
         onConnectClick =  { viewModel.toggleConnection() },
         onSetProbeColorClick = { color -> viewModel.setProbeColor(color) },
         onSetProbeIDClick = { id -> viewModel.setProbeID(id) },
@@ -157,9 +161,15 @@ fun DetailsContent(
                     )
                 }
                 item {
-                    MeasurementsCard(
+                    TemperaturesCard(
                         probeState = screenState.probeState,
-                        cardIsExpanded = screenState.measurementCardIsExpanded,
+                        cardIsExpanded = screenState.temperaturesCardIsExpanded,
+                    )
+                }
+                item {
+                    PredictionsCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.predictionsCardIsExpanded,
                     )
                 }
                 item {
@@ -168,6 +178,12 @@ fun DetailsContent(
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.plotCardIsExpanded,
                         plotDataStartTimestamp = screenState.probeDataStartTimestamp
+                    )
+                }
+                item {
+                    MeasurementsCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.measurementCardIsExpanded,
                     )
                 }
                 item {

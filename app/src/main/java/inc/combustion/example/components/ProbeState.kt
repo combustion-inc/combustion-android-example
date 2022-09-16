@@ -32,10 +32,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import inc.combustion.framework.service.DeviceConnectionState
-import inc.combustion.framework.service.Probe
-import inc.combustion.framework.service.ProbeBatteryStatus
-import inc.combustion.framework.service.ProbeUploadState
+import inc.combustion.framework.service.*
 
 /**
  * State data object for a probe.  Binds the state between the DeviceScreen's ViewModel
@@ -56,14 +53,15 @@ import inc.combustion.framework.service.ProbeUploadState
  * @property id the probes ID setting.
  * @property instantRead the probe's Instant Read value.
  * @property connectionDescription friendly description of connection state
+ * @property samplePeriod: the normal data sample period
  */
 data class ProbeState(
     val serialNumber: String,
-    var macAddress: MutableState<String> = mutableStateOf("TBD"),
-    var firmwareVersion: MutableState<String?> = mutableStateOf(null),
-    var hardwareRevision: MutableState<String?> = mutableStateOf(null),
-    var rssi: MutableState<Int> = mutableStateOf(0),
-    var temperaturesCelsius: SnapshotStateList<Double> = mutableStateListOf(
+    val macAddress: MutableState<String> = mutableStateOf("TBD"),
+    val firmwareVersion: MutableState<String?> = mutableStateOf(null),
+    val hardwareRevision: MutableState<String?> = mutableStateOf(null),
+    val rssi: MutableState<Int> = mutableStateOf(0),
+    val temperaturesCelsius: SnapshotStateList<Double> = mutableStateListOf(
         0.0,
         0.0,
         0.0,
@@ -73,17 +71,31 @@ data class ProbeState(
         0.0,
         0.0
     ),
-    var connectionState: MutableState<ConnectionState> = mutableStateOf(ConnectionState.OUT_OF_RANGE),
-    var units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT),
-    var uploadStatus: MutableState<String> = mutableStateOf(""),
-    var recordsDownloaded: MutableState<Int> = mutableStateOf(0),
-    var recordRange: MutableState<String> = mutableStateOf(""),
-    var color: MutableState<String> = mutableStateOf(""),
-    var id: MutableState<String> = mutableStateOf(""),
-    var batteryStatus: MutableState<String> = mutableStateOf(""),
-    var instantRead: MutableState<String> = mutableStateOf(""),
-    var connectionDescription: MutableState<String> = mutableStateOf(""),
-    var samplePeriod: MutableState<String> = mutableStateOf("0.0")
+    val connectionState: MutableState<ConnectionState> = mutableStateOf(ConnectionState.OUT_OF_RANGE),
+    val units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT),
+    val uploadStatus: MutableState<String> = mutableStateOf(""),
+    val recordsDownloaded: MutableState<Int> = mutableStateOf(0),
+    val recordRange: MutableState<String> = mutableStateOf(""),
+    val color: MutableState<String> = mutableStateOf(""),
+    val id: MutableState<String> = mutableStateOf(""),
+    val batteryStatus: MutableState<String> = mutableStateOf(""),
+    val instantRead: MutableState<String> = mutableStateOf(""),
+    val connectionDescription: MutableState<String> = mutableStateOf(""),
+    val samplePeriod: MutableState<String> = mutableStateOf("0.0"),
+    val virtualCoreSensor: MutableState<String> = mutableStateOf(""),
+    val virtualSurfaceSensor: MutableState<String> = mutableStateOf(""),
+    val hopCount: MutableState<String> = mutableStateOf(""),
+    val coreTemperature: MutableState<String> = mutableStateOf(""),
+    val surfaceTemperature: MutableState<String> = mutableStateOf(""),
+    val ambientTemperature: MutableState<String> = mutableStateOf(""),
+    val predictionState: MutableState<String> = mutableStateOf(""),
+    val predictionMode: MutableState<String> = mutableStateOf(""),
+    val predictionType: MutableState<String> = mutableStateOf(""),
+    val setPointTemperatureC: MutableState<String> = mutableStateOf(""),
+    val heatStartTemperatureC: MutableState<String> = mutableStateOf(""),
+    val percentThroughCook: MutableState<String> = mutableStateOf(""),
+    val prediction: MutableState<String> = mutableStateOf(""),
+    val estimateCoreC: MutableState<String> = mutableStateOf("")
 ) {
     enum class Units(val string: String) {
         FAHRENHEIT("Fahrenheit"),
@@ -181,6 +193,24 @@ data class ProbeState(
             T8.value = "---"
         }
 
+        coreTemperature.value = state.coreTemperature?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+           "---"
+        }
+
+        surfaceTemperature.value = state.surfaceTemperature?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            "---"
+        }
+
+        ambientTemperature.value = state.ambientTemperature?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            "---"
+        }
+
         // convert to friendly string
         uploadStatus.value = when(state.uploadState)  {
             is ProbeUploadState.ProbeUploadInProgress -> {
@@ -206,6 +236,67 @@ data class ProbeState(
             DeviceConnectionState.CONNECTED -> "Connected"
             DeviceConnectionState.DISCONNECTING -> "Connected"
             DeviceConnectionState.DISCONNECTED -> "Disconnected"
+        }
+
+        virtualCoreSensor.value = state.virtualSensors.virtualCoreSensor.toString()
+        virtualSurfaceSensor.value = state.virtualSensors.virtualSurfaceSensor.toString()
+        hopCount.value = state.hopCount.toString()
+
+        predictionState.value = state.predictionState?.let {
+            when(it) {
+                ProbePredictionState.PROBE_NOT_INSERTED -> "Not Inserted"
+                ProbePredictionState.PROBE_INSERTED -> "Inserted"
+                ProbePredictionState.WARMING -> "Warming"
+                ProbePredictionState.PREDICTING -> "Predicting"
+                ProbePredictionState.REMOVAL_PREDICTION_DONE -> "Ready to Remove"
+                ProbePredictionState.RESERVED_STATE_5 -> "Reserved 5"
+                ProbePredictionState.RESERVED_STATE_6 -> "Reserved 6"
+                ProbePredictionState.RESERVED_STATE_7 -> "Reserved 7"
+                ProbePredictionState.RESERVED_STATE_8 -> "Reserved 8"
+                ProbePredictionState.RESERVED_STATE_9 -> "Reserved 9"
+                ProbePredictionState.RESERVED_STATE_10 -> "Reserved 10"
+                ProbePredictionState.RESERVED_STATE_11 ->  "Reserved 11"
+                ProbePredictionState.RESERVED_STATE_12 -> "Reserved 12"
+                ProbePredictionState.RESERVED_STATE_13 -> "Reserved 13"
+                ProbePredictionState.RESERVED_STATE_14 -> "Reserved 14"
+                ProbePredictionState.UNKNOWN -> "Unknown"
+            }
+        } ?: run { "" }
+
+        predictionMode.value = state.predictionMode?.let { it.toString() } ?: run { ProbePredictionMode.NONE.toString() }
+        predictionType.value = state.predictionType?.let { it.toString() } ?: run { ProbePredictionType.NONE.toString() }
+
+        setPointTemperatureC.value = state.setPointTemperatureC?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            ""
+        }
+
+        heatStartTemperatureC.value = state.heatStartTemperatureC?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            "---"
+        }
+
+        prediction.value = state.predictionS?.let {
+            String.format("%02d:%02d", it.toInt() / 60, it.toInt() % 60)
+        } ?: run {
+            "--:--"
+        }
+
+        estimateCoreC.value = state.estimatedCoreC?.let {
+            String.format("%.1f", convertTemperature(it))
+        } ?: run {
+            "---"
+        }
+
+        if(state.heatStartTemperatureC != null && state.estimatedCoreC != null && state.setPointTemperatureC != null) {
+            val start = state.heatStartTemperatureC!!
+            val end = state.setPointTemperatureC!!
+            val core = state.estimatedCoreC!!
+            percentThroughCook.value = "${(((core - start) / (end - start)) * 100.0).toInt()} %"
+        } else {
+            percentThroughCook.value = ""
         }
     }
 
