@@ -84,7 +84,7 @@ data class ProbeState(
     val samplePeriod: MutableState<String> = mutableStateOf("0.0"),
     val virtualCoreSensor: MutableState<String> = mutableStateOf(""),
     val virtualSurfaceSensor: MutableState<String> = mutableStateOf(""),
-    val hopCount: MutableState<String> = mutableStateOf(""),
+    val virtualAmbientSensor: MutableState<String> = mutableStateOf(""),
     val coreTemperature: MutableState<String> = mutableStateOf(""),
     val surfaceTemperature: MutableState<String> = mutableStateOf(""),
     val ambientTemperature: MutableState<String> = mutableStateOf(""),
@@ -240,7 +240,7 @@ data class ProbeState(
 
         virtualCoreSensor.value = state.virtualSensors.virtualCoreSensor.toString()
         virtualSurfaceSensor.value = state.virtualSensors.virtualSurfaceSensor.toString()
-        hopCount.value = state.hopCount.toString()
+        virtualAmbientSensor.value = state.virtualSensors.virtualAmbientSensor.toString()
 
         predictionState.value = state.predictionState?.let {
             when(it) {
