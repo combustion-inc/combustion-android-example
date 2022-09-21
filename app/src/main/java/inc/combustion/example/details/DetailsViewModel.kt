@@ -45,12 +45,13 @@ import java.util.*
 
 class DetailsViewModel (
     val serialNumber: String,
-    private val deviceManager: DeviceManager
+    private val deviceManager: DeviceManager,
+    private val temperatureUnitsConversion: (Double) -> Double
 ) : ViewModel() {
 
     private var collectJob: Job? = null
 
-    val probe = ProbeState(serialNumber)
+    val probe = ProbeState(serialNumber, temperatureUnitsConversion)
     val probeData = mutableStateListOf<LoggedProbeDataPoint>()
     val probeDataStartTimestamp = mutableStateOf(Date())
 
@@ -94,12 +95,13 @@ class DetailsViewModel (
 
     class Factory(
         private val deviceManager: DeviceManager,
-        private val serialNumber: String
+        private val serialNumber: String,
+        private val temperatureUnitsConversion: (Double) -> Double
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DetailsViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return DetailsViewModel(serialNumber, deviceManager) as T
+                return DetailsViewModel(serialNumber, deviceManager, temperatureUnitsConversion) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

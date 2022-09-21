@@ -46,6 +46,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import inc.combustion.example.AppState
 import inc.combustion.example.R
 import inc.combustion.framework.service.LoggedProbeDataPoint
 import inc.combustion.framework.service.ProbePredictionMode
@@ -228,6 +229,7 @@ fun CardDivider() {
 
 @Composable
 fun DeviceSummaryCard(
+    appState: AppState,
     probeState: ProbeState,
     onCardClick: () -> Unit = { },
     onConnectionClick: () -> Unit = { },
@@ -237,6 +239,7 @@ fun DeviceSummaryCard(
         onClick = onCardClick
     ){
         DeviceCardTitle(
+            appState = appState,
             probeState = probeState,
             onBluetoothClick = onConnectionClick,
             onUnitsClick = onUnitsClick
@@ -362,13 +365,14 @@ fun DetailsCard(
 
 @Composable
 fun DeviceCardTitle(
+    appState: AppState,
     probeState: ProbeState,
     onBluetoothClick: () -> Unit,
     onUnitsClick: () -> Unit
 ) {
     Row {
         TemperatureUnitsButton(
-            probeState = probeState,
+            appState = appState,
             onClick = onUnitsClick,
             modifier = Modifier
                 .weight(1.0f)

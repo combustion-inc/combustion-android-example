@@ -57,6 +57,7 @@ import inc.combustion.framework.service.*
  */
 data class ProbeState(
     val serialNumber: String,
+    private val convertTemperatureUnits: (Double) -> Double,
     val macAddress: MutableState<String> = mutableStateOf("TBD"),
     val firmwareVersion: MutableState<String?> = mutableStateOf(null),
     val hardwareRevision: MutableState<String?> = mutableStateOf(null),
@@ -72,7 +73,6 @@ data class ProbeState(
         0.0
     ),
     val connectionState: MutableState<ConnectionState> = mutableStateOf(ConnectionState.OUT_OF_RANGE),
-    val units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT),
     val uploadStatus: MutableState<String> = mutableStateOf(""),
     val recordsDownloaded: MutableState<Int> = mutableStateOf(0),
     val recordRange: MutableState<String> = mutableStateOf(""),
@@ -97,11 +97,6 @@ data class ProbeState(
     val prediction: MutableState<String> = mutableStateOf(""),
     val estimateCoreC: MutableState<String> = mutableStateOf("")
 ) {
-    enum class Units(val string: String) {
-        FAHRENHEIT("Fahrenheit"),
-        CELSIUS("Celsius")
-    }
-
     enum class ConnectionState {
         OUT_OF_RANGE,
         ADVERTISING_CONNECTABLE,
@@ -301,16 +296,11 @@ data class ProbeState(
     }
 
     /**
-     * Converts the input temperature in Celsius to the user's current units preference
-     *
-     * @param temp Temperature in C
-     * @return temperature in preferred units.
+     * Converts temperature to appropriate units.
+     * @param temperature in Celsius
+     * @return temperature is user's preferred temperature units.
      */
-    private fun convertTemperature(temp: Double) : Double {
-        return if(units.value == Units.CELSIUS)
-            temp
-        else
-            (temp * 1.8) + 32.0
+    private fun convertTemperature(temperature: Double) : Double {
+        return convertTemperatureUnits(temperature)
     }
 }
-

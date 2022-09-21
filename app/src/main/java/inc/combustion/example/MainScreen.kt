@@ -37,6 +37,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import inc.combustion.example.components.ProbeState
 import inc.combustion.example.details.DetailsScreen
 import inc.combustion.example.devices.DevicesScreen
 import inc.combustion.example.settings.SettingsScreen
@@ -59,8 +60,14 @@ class AppState(
     val showDetails: MutableState<Boolean> = mutableStateOf(false),
     val showInstantRead: MutableState<Boolean> = mutableStateOf(true),
     val showTemperatures: MutableState<Boolean> = mutableStateOf(true),
-    val showPrediction: MutableState<Boolean> = mutableStateOf(false)
+    val showPrediction: MutableState<Boolean> = mutableStateOf(false),
+    val units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT)
 ) {
+    enum class Units(val string: String) {
+        FAHRENHEIT("Fahrenheit"),
+        CELSIUS("Celsius")
+    }
+
     val noDevicesReasonString: String
         get() = if(!bluetoothIsOn.value) {
                     "Please Turn On Bluetooth..."
@@ -71,6 +78,25 @@ class AppState(
                 else {
                     "Searching..."
                 }
+
+    /**
+     * Converts the input temperature in Celsius to the user's current units preference
+     * @param temp Temperature in C
+     * @return temperature in preferred units.
+     */
+    fun convertTemperature(temp: Double) : Double {
+        return if(units.value == Units.CELSIUS)
+            temp
+        else
+            (temp * 1.8) + 32.0
+    }
+
+    fun cycleUnits() {
+        units.value = when(units.value) {
+            Units.FAHRENHEIT -> Units.CELSIUS
+            Units.CELSIUS -> Units.FAHRENHEIT
+        }
+    }
 
     @Composable
     fun NavHost(modifier: Modifier) {

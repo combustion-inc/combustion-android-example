@@ -63,10 +63,15 @@ fun DetailsScreen(
     appState: AppState,
     serialNumber: String?
 ) {
+    val unitsConversion: (Double) -> Double = { celsius ->
+        appState.convertTemperature(celsius)
+    }
+
     val viewModel : DetailsViewModel = viewModel(
         factory = DetailsViewModel.Factory(
             DeviceManager.instance,
-            serialNumber ?: "?"
+            serialNumber ?: "?",
+            unitsConversion
         )
     )
 
