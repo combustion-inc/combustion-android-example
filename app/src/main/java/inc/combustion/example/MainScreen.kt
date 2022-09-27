@@ -60,7 +60,7 @@ class AppState(
     val showDetails: MutableState<Boolean> = mutableStateOf(false),
     val showInstantRead: MutableState<Boolean> = mutableStateOf(true),
     val showTemperatures: MutableState<Boolean> = mutableStateOf(true),
-    val showPrediction: MutableState<Boolean> = mutableStateOf(false),
+    val showPrediction: MutableState<Boolean> = mutableStateOf(true),
     val units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT)
 ) {
     enum class Units(val string: String) {
@@ -81,14 +81,26 @@ class AppState(
 
     /**
      * Converts the input temperature in Celsius to the user's current units preference
-     * @param temp Temperature in C
+     * @param temperature Temperature in C
      * @return temperature in preferred units.
      */
-    fun convertTemperature(temp: Double) : Double {
+    fun toPreferredTemperatureUnits(temperature: Double) : Double {
         return if(units.value == Units.CELSIUS)
-            temp
+            temperature
         else
-            (temp * 1.8) + 32.0
+            (temperature * 1.8) + 32.0
+    }
+
+    /**
+     * Converts the input temperature in the user's current units preference to Celsius.
+     * @param temperature Temperature in user's current units preference
+     * @return temperature in Celsius
+     */
+    fun fromPreferredTemperatureUnits(temperature: Double) : Double {
+        return if(units.value == Units.CELSIUS)
+            temperature
+        else
+            (temperature - 32.0) * (1.0 / 1.8)
     }
 
     fun cycleUnits() {

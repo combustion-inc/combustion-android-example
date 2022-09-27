@@ -34,7 +34,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import inc.combustion.example.components.SingleSelectDialog
 import inc.combustion.example.AppState
 import inc.combustion.example.components.*
 import inc.combustion.framework.service.*
@@ -63,7 +62,7 @@ fun DevicesScreen(
     appState: AppState
 ) {
     val unitsConversion: (Double) -> Double = { celsius ->
-        appState.convertTemperature(celsius)
+        appState.toPreferredTemperatureUnits(celsius)
     }
 
     val viewModel : DevicesViewModel = viewModel(

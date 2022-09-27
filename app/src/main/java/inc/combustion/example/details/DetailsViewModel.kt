@@ -46,21 +46,27 @@ import java.util.*
 class DetailsViewModel (
     val serialNumber: String,
     private val deviceManager: DeviceManager,
-    private val temperatureUnitsConversion: (Double) -> Double
+    temperatureUnitsConversion: (Double) -> Double
 ) : ViewModel() {
 
     private var collectJob: Job? = null
 
-    val probe = ProbeState(serialNumber, temperatureUnitsConversion)
+    val probeState = ProbeState(serialNumber, temperatureUnitsConversion)
     val probeData = mutableStateListOf<LoggedProbeDataPoint>()
     val probeDataStartTimestamp = mutableStateOf(Date())
 
+    companion object {
+        val MINIMUM_PREDICTION_SETPOINT_CELSIUS = DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
+        val MAXIMUM_PREDICTION_SETPOINT_CELSIUS = DeviceManager.MAXIMUM_PREDICTION_SETPOINT_CELSIUS
+    }
+
     init {
+        updateProbeState(null)
         viewModelScope.launch {
             deviceManager.probeFlow(serialNumber)?.collect { it ->
                 val recordCount = deviceManager.recordsDownloaded(serialNumber)
 
-                probe.updateProbeState(it, recordCount)
+                updateProbeState(it)
 
                 if(it.uploadState is ProbeUploadState.ProbeUploadComplete) {
                     if(collectJob == null) {
@@ -113,18 +119,18 @@ class DetailsViewModel (
      * @see ProbeState
      */
     fun toggleConnection() {
-        when (probe.connectionState.value) {
+        when (probeState.connectionState.value) {
             ProbeState.ConnectionState.ADVERTISING_CONNECTABLE -> {
-                deviceManager.connect(probe.serialNumber)
+                deviceManager.connect(serialNumber)
             }
             ProbeState.ConnectionState.CONNECTED -> {
-                deviceManager.disconnect(probe.serialNumber)
+                deviceManager.disconnect(serialNumber)
             }
             // Otherwise, we cannot change the Connect State of the device.
             else -> {
                 Log.d(
                     LOG_TAG,
-                    "No toggle action ${probe.serialNumber} is ${probe.connectionState.value}"
+                    "No toggle action $serialNumber is ${probeState.connectionState.value}"
                 )
             }
         }
@@ -139,9 +145,9 @@ class DetailsViewModel (
      * @see ProbeColor
      */
     fun setProbeColor(color: ProbeColor) {
-        deviceManager.setProbeColor(probe.serialNumber, color) {
+        deviceManager.setProbeColor(serialNumber, color) {
             if(!it) {
-                Log.e(LOG_TAG, "Failed to set probe color (${probe.serialNumber})")
+                Log.e(LOG_TAG, "Failed to set probe color ($serialNumber)")
             }
         }
     }
@@ -155,9 +161,9 @@ class DetailsViewModel (
      * @see ProbeID
      */
     fun setProbeID(id: ProbeID) {
-        deviceManager.setProbeID(probe.serialNumber, id) {
+        deviceManager.setProbeID(serialNumber, id) {
             if(!it) {
-                Log.e(LOG_TAG, "Failed to set probe ID (${probe.serialNumber})")
+                Log.e(LOG_TAG, "Failed to set probe ID ($serialNumber)")
             }
         }
     }
@@ -169,8 +175,46 @@ class DetailsViewModel (
      */
     fun getShareData(): Pair<String, String> {
         val appVersionName = "${BuildConfig.APPLICATION_ID} ${BuildConfig.VERSION_NAME} ${BuildConfig.BUILD_TYPE}"
-        val (fileName, csvData) = deviceManager.exportLogsForDeviceAsCsv(probe.serialNumber, appVersionName)
+        val (fileName, csvData) = deviceManager.exportLogsForDeviceAsCsv(probeState.serialNumber, appVersionName)
 
         return fileName to csvData
+    }
+
+    /**
+     * Sets the prediction mode to removal with the input setpoint.
+     *
+     * @param removalTemperatureC The target removal temperature in Celsius.
+     */
+    fun setRemovalPrediction(removalTemperatureC: Double) {
+        deviceManager.setRemovalPrediction(serialNumber, removalTemperatureC) {
+            if(!it) {
+                Log.e(LOG_TAG, "Failed to set removal prediction to $removalTemperatureC ($serialNumber)")
+            }
+        }
+    }
+
+    /**
+     * Cancels the prediction if one is active.
+     */
+    fun cancelPrediction() {
+        deviceManager.cancelPrediction(serialNumber) {
+            if(!it) {
+                Log.e(LOG_TAG, "Failed to cancel prediction ($serialNumber)")
+            }
+        }
+    }
+
+    /**
+     * Updates the current value of the ProbeState with what is represented by the framework.
+     *
+     * @param probe Probe data object from the service.  If null, attempts to get the current
+     * value from the probe.
+     */
+    private fun updateProbeState(probe: Probe?) {
+        val recordCount = deviceManager.recordsDownloaded(serialNumber)
+
+        (probe ?: deviceManager.probe(serialNumber))?.let {
+            probeState.updateProbeState(it, recordCount)
+        }
     }
 }

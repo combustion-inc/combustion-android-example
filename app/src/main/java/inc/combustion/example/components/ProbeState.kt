@@ -91,11 +91,12 @@ data class ProbeState(
     val predictionState: MutableState<String> = mutableStateOf(""),
     val predictionMode: MutableState<String> = mutableStateOf(""),
     val predictionType: MutableState<String> = mutableStateOf(""),
-    val setPointTemperatureC: MutableState<String> = mutableStateOf(""),
-    val heatStartTemperatureC: MutableState<String> = mutableStateOf(""),
+    val setPointTemperature: MutableState<String> = mutableStateOf(""),
+    val rawSetPointTemperatureC: MutableState<Double> = mutableStateOf(DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS),
+    val heatStartTemperature: MutableState<String> = mutableStateOf(""),
     val percentThroughCook: MutableState<String> = mutableStateOf(""),
     val prediction: MutableState<String> = mutableStateOf(""),
-    val estimateCoreC: MutableState<String> = mutableStateOf("")
+    val estimateCore: MutableState<String> = mutableStateOf(""),
 ) {
     enum class ConnectionState {
         OUT_OF_RANGE,
@@ -261,13 +262,15 @@ data class ProbeState(
         predictionMode.value = state.predictionMode?.let { it.toString() } ?: run { ProbePredictionMode.NONE.toString() }
         predictionType.value = state.predictionType?.let { it.toString() } ?: run { ProbePredictionType.NONE.toString() }
 
-        setPointTemperatureC.value = state.setPointTemperatureC?.let {
+        rawSetPointTemperatureC.value = state.setPointTemperatureC ?:DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
+
+        setPointTemperature.value = state.setPointTemperatureC?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             ""
         }
 
-        heatStartTemperatureC.value = state.heatStartTemperatureC?.let {
+        heatStartTemperature.value = state.heatStartTemperatureC?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
@@ -279,7 +282,7 @@ data class ProbeState(
             "--:--"
         }
 
-        estimateCoreC.value = state.estimatedCoreC?.let {
+        estimateCore.value = state.estimatedCoreC?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"

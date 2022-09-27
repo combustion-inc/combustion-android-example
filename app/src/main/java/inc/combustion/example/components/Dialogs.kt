@@ -1,6 +1,6 @@
 /*
  * Project: Combustion Inc. Android Example
- * File: SingleSelectionDialog.kt
+ * File: Dialogs.kt
  * Author: https://github.com/miwright2
  *
  * MIT License
@@ -27,9 +27,8 @@
  */
 package inc.combustion.example.components
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,17 +41,93 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
 @Composable
-fun SingleSelectDialog(title: String,
-                       optionsList: List<String>,
-                       defaultSelected: Int,
-                       submitButtonText: String,
-                       onSubmitButtonClick: (Int) -> Unit,
-                       onDismissRequest: () -> Unit) {
+fun TemperatureSelectionDialog(
+    title: String,
+    buttonText: String,
+    onButtonClick: (Int) -> Unit,
+    onDismissRequest: () -> Unit,
+    unitsString: String,
+    initialValue: Int,
+    minValue: Int,
+    maxValue: Int
+) {
+    var selectedNumber by remember { mutableStateOf(initialValue) }
 
+    StandardDialog(
+        title = title ,
+        buttonText = buttonText,
+        onButtonClick = {
+            onButtonClick(selectedNumber)
+        },
+        onDismissRequest = onDismissRequest
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Center
+        ){
+            Spacer(modifier = Modifier.weight(1.0f))
+            NumberPicker(
+                initialValue = initialValue,
+                minValue = minValue,
+                maxValue = maxValue,
+                onValueChange = {
+                    selectedNumber = it
+                }
+            )
+            Text(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                color = MaterialTheme.colors.onPrimary,
+                style = MaterialTheme.typography.h6,
+                text = unitsString
+            )
+            Spacer(modifier = Modifier.weight(1.0f))
+        }
+    }
+}
+
+@Composable
+fun SingleSelectDialog(
+    title: String,
+    optionsList: List<String>,
+    defaultSelected: Int,
+    submitButtonText: String,
+    onSubmitButtonClick: (Int) -> Unit,
+    onDismissRequest: () -> Unit
+) {
     var selectedOption by remember { mutableStateOf(defaultSelected) }
 
-    Dialog(onDismissRequest = { onDismissRequest.invoke() }) {
-        Surface(shape = RoundedCornerShape(10.dp)
+    StandardDialog(
+        title = title,
+        buttonText = submitButtonText,
+        onButtonClick = {
+            onSubmitButtonClick(selectedOption)
+        },
+        onDismissRequest = onDismissRequest
+    ) {
+        LazyColumn {
+            items(optionsList) {
+                RadioButtonRow(
+                    it,
+                    optionsList[selectedOption]
+                ) { selectedValue ->
+                    selectedOption = optionsList.indexOf(selectedValue)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ConfirmationDialog(
+    title: String,
+    details: String,
+    onYesClick: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { onDismiss() }
+    ) {
+        Surface(
+            shape = RoundedCornerShape(10.dp)
         ) {
             Column(modifier = Modifier.padding(10.dp)) {
                 Text(
@@ -60,31 +135,114 @@ fun SingleSelectDialog(title: String,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally),
                     color = MaterialTheme.colors.onPrimary,
-                    style = MaterialTheme.typography.subtitle2,
+                    style = MaterialTheme.typography.subtitle1,
                     textAlign = TextAlign.Center
                 )
-                LazyColumn {
-                    items(optionsList) {
-                        RadioButtonRow(
-                            it,
-                            optionsList[selectedOption]
-                        ) { selectedValue ->
-                            selectedOption = optionsList.indexOf(selectedValue)
-                        }
+                Divider(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 12.dp, top = 36.dp, bottom = 36.dp),
+                    style = MaterialTheme.typography.body1,
+                    textAlign = TextAlign.Center,
+                    text = details
+                )
+                Row {
+                    Button(
+                        onClick = {
+                            onYesClick()
+                            onDismiss()
+                        },
+                        border = BorderStroke(1.dp, MaterialTheme.colors.onSecondary),
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = MaterialTheme.colors.onPrimary,
+                            disabledContentColor = MaterialTheme.colors.onSecondary
+                        ),
+                        modifier = Modifier.weight(1.0f)
+                    ) {
+                        Text(text = "Yes")
+                    }
+                    Spacer(modifier = Modifier.padding(4.dp))
+                    Button(
+                        onClick = onDismiss,
+                        border = BorderStroke(1.dp, MaterialTheme.colors.onSecondary),
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = MaterialTheme.colors.onPrimary,
+                            disabledContentColor = MaterialTheme.colors.onSecondary
+                        ),
+                        modifier = Modifier.weight(1.0f)
+                    ) {
+                        Text(text = "No")
                     }
                 }
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
+            }
+        }
+    }
+}
+
+@Composable
+fun StandardDialog(
+    title: String,
+    buttonText: String,
+    onButtonClick: () -> Unit,
+    onDismissRequest: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { onDismissRequest.invoke() }
+    ) {
+        Surface(
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Text(
+                    text = title,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
+                    color = MaterialTheme.colors.onPrimary,
+                    style = MaterialTheme.typography.subtitle1,
+                    textAlign = TextAlign.Center
+                )
+                Divider(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                )
+                content()
+                DialogButton(
+                    label = buttonText,
+                    enabled = true,
                     onClick = {
-                        onSubmitButtonClick.invoke(selectedOption)
+                        onButtonClick()
                         onDismissRequest.invoke()
                     },
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text(text = submitButtonText)
-                }
+                )
             }
+        }
+    }
+}
 
+@Composable
+fun DialogButton(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier) {
+        Button(
+            onClick = onClick,
+            border = BorderStroke(1.dp, MaterialTheme.colors.onSecondary),
+            colors = ButtonDefaults.buttonColors(
+                contentColor = MaterialTheme.colors.onPrimary,
+                disabledContentColor = MaterialTheme.colors.onSecondary
+            ),
+            enabled = enabled,
+            modifier = modifier
+                .fillMaxWidth()
+        ) {
+            Text(text = label)
         }
     }
 }
