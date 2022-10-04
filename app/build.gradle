@@ -25,7 +25,7 @@ android {
         applicationId "inc.combustion.example"
         minSdk 24
         targetSdk 31
-        versionCode 2000
+        versionCode 2001
         versionName getVersionName()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
