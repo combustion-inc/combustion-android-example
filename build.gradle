@@ -22,7 +22,8 @@ buildscript {
         espresso_core_version = '3.4.0'
         mpandroidchart_version = 'v3.1.0'
         viewbinding_version = '1.1.0'
-        combustion_framework_version = 'v0.4.0'
+        combustion_framework_version = 'hotfix~v0.4.1-SNAPSHOT'
+        // TODO: combustion_framework_version = 'v0.4.1'
     }
     repositories {
         google()
