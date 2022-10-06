@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import inc.combustion.framework.service.*
+import kotlin.math.roundToInt
 
 /**
  * State data object for a probe.  Binds the state between the DeviceScreen's ViewModel
@@ -265,7 +266,7 @@ data class ProbeState(
         rawSetPointTemperatureC.value = state.setPointTemperatureC ?:DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
 
         setPointTemperature.value = state.setPointTemperatureC?.let {
-            String.format("%.1f", convertTemperature(it))
+            convertTemperature(it).roundToInt().toString()
         } ?: run {
             ""
         }
@@ -292,7 +293,11 @@ data class ProbeState(
             val start = state.heatStartTemperatureC!!
             val end = state.setPointTemperatureC!!
             val core = state.estimatedCoreC!!
-            percentThroughCook.value = "${(((core - start) / (end - start)) * 100.0).toInt()} %"
+
+            if(core > end)
+                percentThroughCook.value = "100%"
+            else
+                percentThroughCook.value = "${(((core - start) / (end - start)) * 100.0).toInt()}%"
         } else {
             percentThroughCook.value = ""
         }

@@ -37,6 +37,7 @@ import inc.combustion.example.AppState
 import inc.combustion.example.components.*
 import inc.combustion.framework.service.*
 import java.util.*
+import kotlin.math.roundToInt
 
 data class DetailsScreenState(
     val serialNumber: String,
@@ -49,6 +50,7 @@ data class DetailsScreenState(
     val instantReadCardIsExpanded: MutableState<Boolean>,
     val temperaturesCardIsExpanded: MutableState<Boolean>,
     val predictionsCardIsExpanded: MutableState<Boolean>,
+    val onGetTargetTemperatureC: () -> Double,
     val onConnectClick: () -> Unit,
     val onSetProbeColorClick: (ProbeColor) -> Unit,
     val onSetProbeIDClick: (ProbeID) -> Unit,
@@ -78,6 +80,7 @@ fun DetailsScreen(
         serialNumber = viewModel.serialNumber,
         probeState =  viewModel.probeState,
         probeData = viewModel.probeData,
+        onGetTargetTemperatureC = { viewModel.predictionTargetTemperatureC },
         probeDataStartTimestamp = viewModel.probeDataStartTimestamp,
         measurementCardIsExpanded = appState.showMeasurements,
         plotCardIsExpanded = appState.showPlot,
@@ -164,14 +167,14 @@ fun DetailsContent(
             onDismissRequest = { showEnterSetpointDialog = false },
             unitsString = if(appState.units.value == AppState.Units.FAHRENHEIT) "Fahrenheit" else "Celsius",
             initialValue = appState.toPreferredTemperatureUnits(
-                screenState.probeState.rawSetPointTemperatureC.value
-            ).toInt(),
+                screenState.onGetTargetTemperatureC()
+            ).roundToInt(),
             minValue = appState.toPreferredTemperatureUnits(
                 DetailsViewModel.MINIMUM_PREDICTION_SETPOINT_CELSIUS
             ).toInt(),
             maxValue = appState.toPreferredTemperatureUnits(
                 DetailsViewModel.MAXIMUM_PREDICTION_SETPOINT_CELSIUS
-            ).toInt()
+            ).roundToInt()
         )
     }
 
@@ -199,6 +202,12 @@ fun DetailsContent(
         } else {
             LazyColumn {
                 item {
+                    TemperaturesCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.temperaturesCardIsExpanded,
+                    )
+                }
+                item {
                     PredictionsCard(
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.predictionsCardIsExpanded,
@@ -209,12 +218,6 @@ fun DetailsContent(
                     InstantReadCard(
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.instantReadCardIsExpanded,
-                    )
-                }
-                item {
-                    TemperaturesCard(
-                        probeState = screenState.probeState,
-                        cardIsExpanded = screenState.temperaturesCardIsExpanded,
                     )
                 }
                 item {

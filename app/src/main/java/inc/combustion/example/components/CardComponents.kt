@@ -295,7 +295,7 @@ fun MeasurementsCard(
 
 @Composable
 fun PredictionsCard(
-    title: String = "Prediction",
+    title: String = "Prediction Engine",
     probeState: ProbeState,
     cardIsExpanded: MutableState<Boolean>,
     onSetPredictionClick: () -> Unit = { }
@@ -486,7 +486,7 @@ fun PredictionDetails(
     val isNotConnected = probeState.connectionState.value != ProbeState.ConnectionState.CONNECTED
     val isPredictionEnabled = probeState.predictionMode.value != ProbePredictionMode.NONE.toString()
     val isPredicting = probeState.predictionState.value == "Predicting"
-    val actionString = if(isPredictionEnabled) "Enter Removal Temperature" else "Change Removal Temperature"
+    val actionString = if(isPredictionEnabled) "Change Target Temperature" else "Enter Target Temperature"
 
     if(isNotConnected) {
         CardProgressIndicator(reason = "Please Connect...")
@@ -519,19 +519,19 @@ fun PredictionDetails(
             }
         }
         CardDataItem(
-            label = "Cooking State",
+            label = "Prediction State",
             value = probeState.predictionState.value,
             color = color
         )
         if(isPredictionEnabled) {
             CardDataItem(
-                label = "Cooking To",
+                label = "Target Temperature",
                 value = probeState.setPointTemperature.value,
                 color = color
             )
             if(isPredicting) {
                 CardDataItem(
-                    label = "Cook Progress",
+                    label = "Progress",
                     value = probeState.percentThroughCook.value,
                     color = color
                 )

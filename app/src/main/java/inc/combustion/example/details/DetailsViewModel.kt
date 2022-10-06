@@ -55,9 +55,18 @@ class DetailsViewModel (
     val probeData = mutableStateListOf<LoggedProbeDataPoint>()
     val probeDataStartTimestamp = mutableStateOf(Date())
 
+    val predictionTargetTemperatureC: Double
+        get() {
+            if(probeState.predictionMode.value == ProbePredictionMode.NONE.toString()) {
+                return 54.5
+            }
+
+            return probeState.rawSetPointTemperatureC.value
+        }
+
     companion object {
-        val MINIMUM_PREDICTION_SETPOINT_CELSIUS = DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
-        val MAXIMUM_PREDICTION_SETPOINT_CELSIUS = DeviceManager.MAXIMUM_PREDICTION_SETPOINT_CELSIUS
+        const val MINIMUM_PREDICTION_SETPOINT_CELSIUS = DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
+        const val MAXIMUM_PREDICTION_SETPOINT_CELSIUS = DeviceManager.MAXIMUM_PREDICTION_SETPOINT_CELSIUS
     }
 
     init {
