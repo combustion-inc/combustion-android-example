@@ -243,7 +243,7 @@ data class ProbeState(
             when(it) {
                 ProbePredictionState.PROBE_NOT_INSERTED -> "Not Inserted"
                 ProbePredictionState.PROBE_INSERTED -> "Inserted"
-                ProbePredictionState.WARMING -> "Warming"
+                ProbePredictionState.COOKING -> "Cooking"
                 ProbePredictionState.PREDICTING -> "Predicting"
                 ProbePredictionState.REMOVAL_PREDICTION_DONE -> "Ready to Remove"
                 ProbePredictionState.RESERVED_STATE_5 -> "Reserved 5"

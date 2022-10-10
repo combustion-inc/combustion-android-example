@@ -485,6 +485,7 @@ fun PredictionDetails(
     val color = DataColor(probeState = probeState)
     val isNotConnected = probeState.connectionState.value != ProbeState.ConnectionState.CONNECTED
     val isPredictionEnabled = probeState.predictionMode.value != ProbePredictionMode.NONE.toString()
+    val isCooking = probeState.predictionState.value == "Cooking"
     val isPredicting = probeState.predictionState.value == "Predicting"
     val actionString = if(isPredictionEnabled) "Change Target Temperature" else "Enter Target Temperature"
 
@@ -506,7 +507,7 @@ fun PredictionDetails(
                         text = probeState.prediction.value
                     )
                 }
-                else {
+                else if(isCooking){
                     Text(
                         modifier = Modifier
                             .weight(1.0f),

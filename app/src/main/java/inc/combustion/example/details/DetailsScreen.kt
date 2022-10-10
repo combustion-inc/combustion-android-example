@@ -161,7 +161,7 @@ fun DetailsContent(
 
     if (showEnterSetpointDialog) {
         TemperatureSelectionDialog(
-            title = "Removal Temperature",
+            title = "Target Temperature",
             buttonText = "Set",
             onButtonClick = screenState.onSetRemovalPredictionClick,
             onDismissRequest = { showEnterSetpointDialog = false },
