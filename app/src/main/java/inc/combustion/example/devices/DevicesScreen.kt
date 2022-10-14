@@ -34,7 +34,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import inc.combustion.example.components.SingleSelectDialog
 import inc.combustion.example.AppState
 import inc.combustion.example.components.*
 import inc.combustion.framework.service.*
@@ -51,7 +50,7 @@ import inc.combustion.framework.service.*
  */
 data class DevicesScreenState(
     val probes: SnapshotStateMap<String, ProbeState>,
-    val onUnitsClick: (ProbeState) -> Unit,
+    val onUnitsClick: () -> Unit,
     val onBluetoothClick: (ProbeState) -> Unit,
     val onSetProbeColorClick: (String, ProbeColor) -> Unit,
     val onSetProbeIDClick: (String, ProbeID) -> Unit,
@@ -62,13 +61,18 @@ data class DevicesScreenState(
 fun DevicesScreen(
     appState: AppState
 ) {
+    val unitsConversion: (Double) -> Double = { celsius ->
+        appState.toPreferredTemperatureUnits(celsius)
+    }
+
     val viewModel : DevicesViewModel = viewModel(
-        factory = DevicesViewModel.Factory(DeviceManager.instance)
+        factory = DevicesViewModel.Factory(DeviceManager.instance, unitsConversion)
     )
+
     val screenState = DevicesScreenState(
         probes = remember { viewModel.probes },
-        onUnitsClick = { device ->
-            viewModel.toggleUnits(device)
+        onUnitsClick = {
+            appState.cycleUnits()
         },
         onBluetoothClick = { device ->
             viewModel.toggleConnection(device)
@@ -114,10 +118,11 @@ fun DevicesContent(
             ) {
                 items(list) { item ->
                     DeviceSummaryCard(
+                        appState = appState,
                         probeState = item,
                         onCardClick = { screenState.onCardClick(item.serialNumber) },
                         onConnectionClick = { screenState.onBluetoothClick(item) },
-                        onUnitsClick = { screenState.onUnitsClick(item) }
+                        onUnitsClick = { screenState.onUnitsClick() }
                     )
                 }
             }

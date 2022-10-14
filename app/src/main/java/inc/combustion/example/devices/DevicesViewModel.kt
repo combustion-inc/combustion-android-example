@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.*
  */
 class DevicesViewModel(
     private val deviceManager : DeviceManager,
+    private val temperatureUnitsConversion: (Double) -> Double
 ) : ViewModel() {
 
     data class SnackBarMessage(
@@ -111,30 +112,15 @@ class DevicesViewModel(
      */
     class Factory(
         private val deviceManager: DeviceManager,
+        private val temperatureUnitsConversion: (Double) -> Double
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DevicesViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return DevicesViewModel(deviceManager) as T
+                return DevicesViewModel(deviceManager, temperatureUnitsConversion) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
-    }
-
-    /**
-     * ViewModel processing of Units Button click from the Card composable on the DevicesScreen.
-     *
-     * @param probe UI state for the probe.
-     *
-     * @see ProbeState
-     */
-    fun toggleUnits(probe: ProbeState) {
-        probe.units.value = if(probe.units.value == ProbeState.Units.FAHRENHEIT)
-            ProbeState.Units.CELSIUS
-        else
-            ProbeState.Units.FAHRENHEIT
-
-        Log.d(LOG_TAG, "${probe.serialNumber} units set to ${probe.units.value}")
     }
 
     /**
@@ -211,7 +197,7 @@ class DevicesViewModel(
         if(!probes.containsKey(serialNumber)) {
 
             // Create UI State data object for the probe and add it to our Observable list.
-            probes[serialNumber] = ProbeState(serialNumber)
+            probes[serialNumber] = ProbeState(serialNumber, temperatureUnitsConversion)
 
             // Create a coroutine in the ViewModel's scope to collect probe state changes
             // from the service.

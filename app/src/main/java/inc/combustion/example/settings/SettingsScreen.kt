@@ -37,6 +37,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.alorma.compose.settings.storage.base.rememberBooleanSettingState
+import com.alorma.compose.settings.storage.base.rememberStringSettingState
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import inc.combustion.example.*
 import inc.combustion.example.R
@@ -48,7 +49,7 @@ data class SettingsScreenState(
     val onScanningToggle: (Boolean) -> Boolean,
     var onDataCacheClear: () -> Unit,
     val versionString: String,
-    val frameworkVersionString: String
+    val frameworkVersionString: String,
 )
 
 @Composable
@@ -76,6 +77,7 @@ fun SettingsContent(
         appState = appState
     ) {
         SettingsList(
+            appState = appState,
             state = screenState
         )
     }
@@ -84,6 +86,7 @@ fun SettingsContent(
 
 @Composable
 fun SettingsList(
+    appState: AppState,
     state: SettingsScreenState,
 ) {
     val checkedState: SettingValueState<Boolean> = rememberBooleanSettingState()
@@ -91,21 +94,19 @@ fun SettingsList(
     checkedState.value = state.isScanning
 
     Column {
-        /*
-        // TODO -- Determine if this feature should be removed.
         Divider()
-        val scanningSubTitle = if(checkedState.value) "Searching for probes" else "Not searching for probes"
-        SettingsSwitch(
-            icon = { Icon(imageVector = Icons.Default.Refresh, contentDescription = "BLE Scanning") },
+        SettingsMenuLink(
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_thermostat_24),
+                    contentDescription = "Change Units"
+                )
+            },
+            title = { Text(text = "Change Units") },
+            subtitle = { Text(text = appState.units.value.string) },
+            onClick = { appState.cycleUnits() },
             modifier = Modifier.background(MaterialTheme.colors.background),
-            title = { Text(text = "BLE Scanning") },
-            subtitle = { Text(text = scanningSubTitle) },
-            state = checkedState,
-            onCheckedChange = {
-                checkedState.value = state.onScanningToggle(it)
-            }
         )
-         */
         Divider()
         SettingsMenuLink(
             icon = {

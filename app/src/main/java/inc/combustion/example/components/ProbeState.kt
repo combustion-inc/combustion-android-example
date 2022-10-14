@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import inc.combustion.framework.service.*
+import kotlin.math.roundToInt
 
 /**
  * State data object for a probe.  Binds the state between the DeviceScreen's ViewModel
@@ -57,6 +58,7 @@ import inc.combustion.framework.service.*
  */
 data class ProbeState(
     val serialNumber: String,
+    private val convertTemperatureUnits: (Double) -> Double,
     val macAddress: MutableState<String> = mutableStateOf("TBD"),
     val firmwareVersion: MutableState<String?> = mutableStateOf(null),
     val hardwareRevision: MutableState<String?> = mutableStateOf(null),
@@ -72,7 +74,6 @@ data class ProbeState(
         0.0
     ),
     val connectionState: MutableState<ConnectionState> = mutableStateOf(ConnectionState.OUT_OF_RANGE),
-    val units: MutableState<Units> = mutableStateOf(Units.FAHRENHEIT),
     val uploadStatus: MutableState<String> = mutableStateOf(""),
     val recordsDownloaded: MutableState<Int> = mutableStateOf(0),
     val recordRange: MutableState<String> = mutableStateOf(""),
@@ -91,17 +92,13 @@ data class ProbeState(
     val predictionState: MutableState<String> = mutableStateOf(""),
     val predictionMode: MutableState<String> = mutableStateOf(""),
     val predictionType: MutableState<String> = mutableStateOf(""),
-    val setPointTemperatureC: MutableState<String> = mutableStateOf(""),
-    val heatStartTemperatureC: MutableState<String> = mutableStateOf(""),
+    val setPointTemperature: MutableState<String> = mutableStateOf(""),
+    val rawSetPointTemperatureC: MutableState<Double> = mutableStateOf(DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS),
+    val heatStartTemperature: MutableState<String> = mutableStateOf(""),
     val percentThroughCook: MutableState<String> = mutableStateOf(""),
     val prediction: MutableState<String> = mutableStateOf(""),
-    val estimateCoreC: MutableState<String> = mutableStateOf("")
+    val estimateCore: MutableState<String> = mutableStateOf(""),
 ) {
-    enum class Units(val string: String) {
-        FAHRENHEIT("Fahrenheit"),
-        CELSIUS("Celsius")
-    }
-
     enum class ConnectionState {
         OUT_OF_RANGE,
         ADVERTISING_CONNECTABLE,
@@ -246,7 +243,7 @@ data class ProbeState(
             when(it) {
                 ProbePredictionState.PROBE_NOT_INSERTED -> "Not Inserted"
                 ProbePredictionState.PROBE_INSERTED -> "Inserted"
-                ProbePredictionState.WARMING -> "Warming"
+                ProbePredictionState.COOKING -> "Cooking"
                 ProbePredictionState.PREDICTING -> "Predicting"
                 ProbePredictionState.REMOVAL_PREDICTION_DONE -> "Ready to Remove"
                 ProbePredictionState.RESERVED_STATE_5 -> "Reserved 5"
@@ -266,13 +263,15 @@ data class ProbeState(
         predictionMode.value = state.predictionMode?.let { it.toString() } ?: run { ProbePredictionMode.NONE.toString() }
         predictionType.value = state.predictionType?.let { it.toString() } ?: run { ProbePredictionType.NONE.toString() }
 
-        setPointTemperatureC.value = state.setPointTemperatureC?.let {
-            String.format("%.1f", convertTemperature(it))
+        rawSetPointTemperatureC.value = state.setPointTemperatureC ?:DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
+
+        setPointTemperature.value = state.setPointTemperatureC?.let {
+            convertTemperature(it).roundToInt().toString()
         } ?: run {
             ""
         }
 
-        heatStartTemperatureC.value = state.heatStartTemperatureC?.let {
+        heatStartTemperature.value = state.heatStartTemperatureC?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
@@ -284,7 +283,7 @@ data class ProbeState(
             "--:--"
         }
 
-        estimateCoreC.value = state.estimatedCoreC?.let {
+        estimateCore.value = state.estimatedCoreC?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
@@ -294,23 +293,22 @@ data class ProbeState(
             val start = state.heatStartTemperatureC!!
             val end = state.setPointTemperatureC!!
             val core = state.estimatedCoreC!!
-            percentThroughCook.value = "${(((core - start) / (end - start)) * 100.0).toInt()} %"
+
+            if(core > end)
+                percentThroughCook.value = "100%"
+            else
+                percentThroughCook.value = "${(((core - start) / (end - start)) * 100.0).toInt()}%"
         } else {
             percentThroughCook.value = ""
         }
     }
 
     /**
-     * Converts the input temperature in Celsius to the user's current units preference
-     *
-     * @param temp Temperature in C
-     * @return temperature in preferred units.
+     * Converts temperature to appropriate units.
+     * @param temperature in Celsius
+     * @return temperature is user's preferred temperature units.
      */
-    private fun convertTemperature(temp: Double) : Double {
-        return if(units.value == Units.CELSIUS)
-            temp
-        else
-            (temp * 1.8) + 32.0
+    private fun convertTemperature(temperature: Double) : Double {
+        return convertTemperatureUnits(temperature)
     }
 }
-

@@ -22,4 +22,9 @@
     <style name="Theme.CombustionIncEngineering.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.CombustionIncEngineering.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="NumberPickerText" parent="Theme.CombustionIncEngineering">
+        <item name="android:textSize">17sp</item>
+        <item name="android:fontFamily">soraFont</item>
+    </style>
 </resources>
