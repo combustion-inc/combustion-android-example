@@ -298,10 +298,15 @@ fun PredictionsCard(
     title: String = "Prediction Engine",
     probeState: ProbeState,
     cardIsExpanded: MutableState<Boolean>,
-    onSetPredictionClick: () -> Unit = { }
+    onSetPredictionClick: () -> Unit = { },
+    onCancelPredictionClick: () -> Unit = { }
 ) {
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
-        PredictionDetails(probeState = probeState, onSetPredictionClick = onSetPredictionClick)
+        PredictionDetails(
+            probeState = probeState,
+            onSetPredictionClick = onSetPredictionClick,
+            onCancelPredictionClick = onCancelPredictionClick
+        )
     }
 }
 
@@ -351,14 +356,12 @@ fun DetailsCard(
     cardIsExpanded: MutableState<Boolean>,
     onSetProbeColorClick: () -> Unit = { },
     onSetProbeIDClick: () -> Unit = { },
-    onCancelPredictionClick: () -> Unit = { }
 ) {
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
         ProbeDetails(
             probeState = probeState,
             onSetProbeColorClick = onSetProbeColorClick,
             onSetProbeIDClick = onSetProbeIDClick,
-            onCancelPredictionClick = onCancelPredictionClick
         )
     }
 }
@@ -480,14 +483,17 @@ fun SensorMeasurements(
 @Composable
 fun PredictionDetails(
     probeState: ProbeState,
-    onSetPredictionClick: () -> Unit = { }
+    onSetPredictionClick: () -> Unit = { },
+    onCancelPredictionClick: () -> Unit
 ) {
+    val emptyHandler: () -> Unit = { }
     val color = DataColor(probeState = probeState)
     val isNotConnected = probeState.connectionState.value != ProbeState.ConnectionState.CONNECTED
     val isPredictionEnabled = probeState.predictionMode.value != ProbePredictionMode.NONE.toString()
     val isCooking = probeState.predictionState.value == "Cooking"
     val isPredicting = probeState.predictionState.value == "Predicting"
     val actionString = if(isPredictionEnabled) "Change Target Temperature" else "Enter Target Temperature"
+    val cancelPredictionHandler = if(isPredictionEnabled) onCancelPredictionClick else emptyHandler
 
     if(isNotConnected) {
         CardProgressIndicator(reason = "Please Connect...")
@@ -519,11 +525,20 @@ fun PredictionDetails(
                 }
             }
         }
-        CardDataItem(
-            label = "Prediction State",
-            value = probeState.predictionState.value,
-            color = color
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ){
+            val style = if(isPredictionEnabled) MaterialTheme.typography.subtitle2 else MaterialTheme.typography.h2
+
+            Text(
+                modifier = Modifier
+                    .weight(1.0f),
+                color = color,
+                style = MaterialTheme.typography.h3,
+                textAlign = TextAlign.Center,
+                text = probeState.predictionState.value,
+            )
+        }
         if(isPredictionEnabled) {
             CardDataItem(
                 label = "Target Temperature",
@@ -543,6 +558,11 @@ fun PredictionDetails(
             enabled = true,
             onClick = onSetPredictionClick
         )
+        CardWideButton(
+            label = "Stop Prediction",
+            enabled = isPredictionEnabled,
+            onClick = cancelPredictionHandler
+        )
     }
 }
 
@@ -551,16 +571,12 @@ fun ProbeDetails(
     probeState: ProbeState,
     onSetProbeColorClick: () -> Unit,
     onSetProbeIDClick: () -> Unit,
-    onCancelPredictionClick: () -> Unit
 ) {
     val emptyHandler: () -> Unit = { }
     val color = DataColor(probeState = probeState)
     val connected = probeState.connectionState.value == ProbeState.ConnectionState.CONNECTED
-    val predicting = probeState.predictionMode.value != ProbePredictionMode.NONE.toString()
-
     val setColorHandler = if(connected) onSetProbeColorClick else emptyHandler
     val setIDHandler = if(connected) onSetProbeIDClick else emptyHandler
-    val cancelPredictionHandler = if(predicting) onCancelPredictionClick else emptyHandler
 
     Row(modifier = Modifier
         .padding(vertical = dimensionResource(id = R.dimen.large_padding))
@@ -671,11 +687,6 @@ fun ProbeDetails(
                     color = color
                 )
                 CardDivider()
-                CardWideButton(
-                    label = "Stop Prediction",
-                    enabled = predicting,
-                    onClick = cancelPredictionHandler
-                )
                 CardWideButton(
                     label = "Change Probe Color",
                     enabled = connected,
