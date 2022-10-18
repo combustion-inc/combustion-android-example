@@ -211,7 +211,8 @@ fun DetailsContent(
                     PredictionsCard(
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.predictionsCardIsExpanded,
-                        onSetPredictionClick = { showEnterSetpointDialog = true }
+                        onSetPredictionClick = { showEnterSetpointDialog = true },
+                        onCancelPredictionClick = { showCancelPredictionDialog = true }
                     )
                 }
                 item {
@@ -240,7 +241,6 @@ fun DetailsContent(
                         cardIsExpanded = screenState.detailsCardIsExpanded,
                         onSetProbeColorClick = { showProbeColorDialog = true },
                         onSetProbeIDClick = { showProbeIDDialog = true },
-                        onCancelPredictionClick = { showCancelPredictionDialog = true }
                     )
                 }
             }
