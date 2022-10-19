@@ -28,15 +28,12 @@
 
 package inc.combustion.example.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,8 +43,10 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import inc.combustion.example.AppState
 import inc.combustion.example.R
 import inc.combustion.framework.service.LoggedProbeDataPoint
+import inc.combustion.framework.service.ProbePredictionMode
 import java.util.*
 
 @Composable
@@ -227,6 +226,7 @@ fun CardDivider() {
 
 @Composable
 fun DeviceSummaryCard(
+    appState: AppState,
     probeState: ProbeState,
     onCardClick: () -> Unit = { },
     onConnectionClick: () -> Unit = { },
@@ -236,11 +236,11 @@ fun DeviceSummaryCard(
         onClick = onCardClick
     ){
         DeviceCardTitle(
+            appState = appState,
             probeState = probeState,
             onBluetoothClick = onConnectionClick,
             onUnitsClick = onUnitsClick
         )
-        //AllTemperaturesMeasurements(probeState = probeState)
         SummaryMeasurements(probeState = probeState)
         SummaryDetails(probeState = probeState)
     }
@@ -272,13 +272,41 @@ fun InstantReadCard(
 }
 
 @Composable
+fun TemperaturesCard(
+    title: String = "Temperatures",
+    probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
+) {
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
+        TemperatureMeasurements(probeState = probeState)
+    }
+}
+
+@Composable
 fun MeasurementsCard(
-    title: String = "Measurements",
+    title: String = "Sensors",
     probeState: ProbeState,
     cardIsExpanded: MutableState<Boolean>,
 ) {
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
         SensorMeasurements(probeState = probeState)
+    }
+}
+
+@Composable
+fun PredictionsCard(
+    title: String = "Prediction Engine",
+    probeState: ProbeState,
+    cardIsExpanded: MutableState<Boolean>,
+    onSetPredictionClick: () -> Unit = { },
+    onCancelPredictionClick: () -> Unit = { }
+) {
+    ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
+        PredictionDetails(
+            probeState = probeState,
+            onSetPredictionClick = onSetPredictionClick,
+            onCancelPredictionClick = onCancelPredictionClick
+        )
     }
 }
 
@@ -327,26 +355,27 @@ fun DetailsCard(
     probeState: ProbeState,
     cardIsExpanded: MutableState<Boolean>,
     onSetProbeColorClick: () -> Unit = { },
-    onSetProbeIDClick: () -> Unit = { }
+    onSetProbeIDClick: () -> Unit = { },
 ) {
     ExpandableAppCard(title = title, cardIsExpanded = cardIsExpanded){
         ProbeDetails(
             probeState = probeState,
             onSetProbeColorClick = onSetProbeColorClick,
-            onSetProbeIDClick = onSetProbeIDClick
+            onSetProbeIDClick = onSetProbeIDClick,
         )
     }
 }
 
 @Composable
 fun DeviceCardTitle(
+    appState: AppState,
     probeState: ProbeState,
     onBluetoothClick: () -> Unit,
     onUnitsClick: () -> Unit
 ) {
     Row {
         TemperatureUnitsButton(
-            probeState = probeState,
+            appState = appState,
             onClick = onUnitsClick,
             modifier = Modifier
                 .weight(1.0f)
@@ -385,22 +414,22 @@ fun SummaryMeasurements(
             Modifier.weight(1.0f)
         )
         CardTemperature(
-            label = "Tip",
-            value = probeState.T1,
+            label = "Core",
+            value = probeState.coreTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
     }
     Row {
         CardTemperature(
-            label = "Middle",
-            value = probeState.T4,
+            label = "Surface",
+            value = probeState.surfaceTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
         CardTemperature(
-            label = "Handle",
-            value = probeState.T8,
+            label = "Ambient",
+            value = probeState.ambientTemperature,
             color = color,
             Modifier.weight(1.0f)
         )
@@ -408,22 +437,16 @@ fun SummaryMeasurements(
 }
 
 @Composable
-fun AllTemperaturesMeasurements(
-    probeState: ProbeState
+fun TemperatureMeasurements(
+    probeState: ProbeState,
+    modifier: Modifier = Modifier
 ) {
     val color = DataColor(probeState = probeState)
-
     Row {
-        CardTemperature(
-            label = "Instant Read",
-            value = probeState.instantRead,
-            color = color,
-            Modifier.weight(1.0f)
-        )
+        CardTemperature("Core", probeState.coreTemperature, color, modifier.weight(1.0f))
+        CardTemperature("Surface", probeState.surfaceTemperature, color, modifier.weight(1.0f))
+        CardTemperature("Ambient", probeState.ambientTemperature, color, modifier.weight(1.0f))
     }
-    SensorMeasurements(
-        probeState = probeState,
-    )
 }
 
 @Composable
@@ -457,30 +480,103 @@ fun SensorMeasurements(
     }
 }
 
+@Composable
+fun PredictionDetails(
+    probeState: ProbeState,
+    onSetPredictionClick: () -> Unit = { },
+    onCancelPredictionClick: () -> Unit
+) {
+    val emptyHandler: () -> Unit = { }
+    val color = DataColor(probeState = probeState)
+    val isNotConnected = probeState.connectionState.value != ProbeState.ConnectionState.CONNECTED
+    val isPredictionEnabled = probeState.predictionMode.value != ProbePredictionMode.NONE.toString()
+    val isCooking = probeState.predictionState.value == "Cooking"
+    val isPredicting = probeState.predictionState.value == "Predicting"
+    val actionString = if(isPredictionEnabled) "Change Target Temperature" else "Enter Target Temperature"
+    val cancelPredictionHandler = if(isPredictionEnabled) onCancelPredictionClick else emptyHandler
+
+    if(isNotConnected) {
+        CardProgressIndicator(reason = "Please Connect...")
+    }
+    else {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ){
+            if(isPredictionEnabled) {
+                if(isPredicting) {
+                    Text(
+                        modifier = Modifier
+                            .weight(1.0f),
+                        color = color,
+                        style = MaterialTheme.typography.h2,
+                        textAlign = TextAlign.Center,
+                        text = probeState.prediction.value
+                    )
+                }
+                else if(isCooking){
+                    Text(
+                        modifier = Modifier
+                            .weight(1.0f),
+                        color = color,
+                        style = MaterialTheme.typography.h2,
+                        textAlign = TextAlign.Center,
+                        text = probeState.percentThroughCook.value
+                    )
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ){
+            val style = if(isPredictionEnabled) MaterialTheme.typography.subtitle2 else MaterialTheme.typography.h2
+
+            Text(
+                modifier = Modifier
+                    .weight(1.0f),
+                color = color,
+                style = MaterialTheme.typography.h3,
+                textAlign = TextAlign.Center,
+                text = probeState.predictionState.value,
+            )
+        }
+        if(isPredictionEnabled) {
+            CardDataItem(
+                label = "Target Temperature",
+                value = probeState.setPointTemperature.value,
+                color = color
+            )
+            if(isPredicting) {
+                CardDataItem(
+                    label = "Progress",
+                    value = probeState.percentThroughCook.value,
+                    color = color
+                )
+            }
+        }
+        CardWideButton(
+            label = actionString,
+            enabled = true,
+            onClick = onSetPredictionClick
+        )
+        CardWideButton(
+            label = "Stop Prediction",
+            enabled = isPredictionEnabled,
+            onClick = cancelPredictionHandler
+        )
+    }
+}
 
 @Composable
 fun ProbeDetails(
     probeState: ProbeState,
     onSetProbeColorClick: () -> Unit,
-    onSetProbeIDClick: () -> Unit
+    onSetProbeIDClick: () -> Unit,
 ) {
     val emptyHandler: () -> Unit = { }
     val color = DataColor(probeState = probeState)
-
-    val setCommandColor = if(probeState.connectionState.value == ProbeState.ConnectionState.CONNECTED)
-        MaterialTheme.colors.onPrimary
-    else
-        MaterialTheme.colors.onSecondary
-
-    val setColorHandler = if(probeState.connectionState.value == ProbeState.ConnectionState.CONNECTED)
-        onSetProbeColorClick
-    else
-        emptyHandler
-
-    val setIDHandler = if(probeState.connectionState.value == ProbeState.ConnectionState.CONNECTED)
-        onSetProbeIDClick
-    else
-        emptyHandler
+    val connected = probeState.connectionState.value == ProbeState.ConnectionState.CONNECTED
+    val setColorHandler = if(connected) onSetProbeColorClick else emptyHandler
+    val setIDHandler = if(connected) onSetProbeIDClick else emptyHandler
 
     Row(modifier = Modifier
         .padding(vertical = dimensionResource(id = R.dimen.large_padding))
@@ -503,6 +599,43 @@ fun ProbeDetails(
                 CardDataItem(
                     label = "Signal Strength",
                     value = probeState.rssi.value.toString(),
+                    color = color
+                )
+                CardDivider()
+                CardDataItem(
+                    label = "Core Sensor",
+                    value = probeState.virtualCoreSensor.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Surface Sensor",
+                    value = probeState.virtualSurfaceSensor.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Ambient Sensor",
+                    value = probeState.virtualAmbientSensor.value,
+                    color = color
+                )
+                CardDivider()
+                CardDataItem(
+                    label = "Prediction Mode",
+                    value = probeState.predictionMode.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Prediction Type",
+                    value = probeState.predictionType.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Heat Start",
+                    value = probeState.heatStartTemperature.value,
+                    color = color
+                )
+                CardDataItem(
+                    label = "Estimated Core",
+                    value = probeState.estimateCore.value,
                     color = color
                 )
                 CardDivider()
@@ -554,13 +687,15 @@ fun ProbeDetails(
                     color = color
                 )
                 CardDivider()
-                CardTwoButtons(
-                    leftLabel = "Set Probe Color",
-                    leftColor = setCommandColor,
-                    leftHandler = setColorHandler,
-                    rightLabel = "Set Probe ID",
-                    rightColor = setCommandColor,
-                    rightHandler = setIDHandler
+                CardWideButton(
+                    label = "Change Probe Color",
+                    enabled = connected,
+                    onClick = setColorHandler
+                )
+                CardWideButton(
+                    label = "Change Probe ID",
+                    enabled = connected,
+                    onClick = setIDHandler
                 )
             }
         }
@@ -643,42 +778,27 @@ fun CardDataItem(
 }
 
 @Composable
-fun CardTwoButtons(
-    leftLabel: String,
-    leftColor: Color,
-    leftHandler: () -> Unit,
-    rightLabel: String,
-    rightColor: Color,
-    rightHandler: () -> Unit
+fun CardWideButton(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            modifier = Modifier
+    Row(modifier) {
+        Button(
+            onClick = onClick,
+            border = BorderStroke(1.dp, MaterialTheme.colors.onSecondary),
+            colors = ButtonDefaults.buttonColors(
+                contentColor = MaterialTheme.colors.onPrimary,
+                disabledContentColor = MaterialTheme.colors.onSecondary
+            ),
+            enabled = enabled,
+            modifier = modifier
+                .fillMaxWidth()
                 .weight(1.0f)
-                .padding(start = 12.dp, top = 4.dp)
-                .selectable(
-                    selected = false,
-                    onClick = leftHandler
-                ),
-            color = leftColor,
-            style = MaterialTheme.typography.subtitle2,
-            textAlign = TextAlign.Left,
-            text = leftLabel
-        )
-        Text(
-            modifier = Modifier
-                .weight(1.0f)
-                .padding(end = 12.dp, top = 4.dp)
-                .selectable(
-                    selected = false,
-                    onClick = rightHandler
-                ),
-            color = rightColor,
-            style = MaterialTheme.typography.subtitle2,
-            textAlign = TextAlign.Right,
-            text = rightLabel
-        )
+                .padding(start = 12.dp, top = 4.dp, end = 12.dp)
+        ) {
+            Text(text = label)
+        }
     }
 }

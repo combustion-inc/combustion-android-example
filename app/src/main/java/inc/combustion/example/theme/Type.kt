@@ -60,8 +60,8 @@ val Typography = Typography(
     ),
     h3 = TextStyle(
         fontFamily = soraFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 40.sp
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp
     ),
     h5 = TextStyle(
         fontFamily = soraFont,

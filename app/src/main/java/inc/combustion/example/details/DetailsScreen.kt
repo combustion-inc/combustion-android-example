@@ -35,11 +35,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import inc.combustion.example.components.SingleSelectDialog
 import inc.combustion.example.AppState
 import inc.combustion.example.components.*
-import inc.combustion.framework.service.DeviceManager
-import inc.combustion.framework.service.LoggedProbeDataPoint
-import inc.combustion.framework.service.ProbeColor
-import inc.combustion.framework.service.ProbeID
+import inc.combustion.framework.service.*
 import java.util.*
+import kotlin.math.roundToInt
 
 data class DetailsScreenState(
     val serialNumber: String,
@@ -50,10 +48,15 @@ data class DetailsScreenState(
     val plotCardIsExpanded: MutableState<Boolean>,
     val detailsCardIsExpanded: MutableState<Boolean>,
     val instantReadCardIsExpanded: MutableState<Boolean>,
+    val temperaturesCardIsExpanded: MutableState<Boolean>,
+    val predictionsCardIsExpanded: MutableState<Boolean>,
+    val onGetTargetTemperatureC: () -> Double,
     val onConnectClick: () -> Unit,
     val onSetProbeColorClick: (ProbeColor) -> Unit,
     val onSetProbeIDClick: (ProbeID) -> Unit,
     val onShareClick: () -> Unit,
+    val onSetRemovalPredictionClick: (Int) -> Unit,
+    val onCancelPredictionClick: () -> Unit
 )
 
 @Composable
@@ -61,29 +64,43 @@ fun DetailsScreen(
     appState: AppState,
     serialNumber: String?
 ) {
+    val unitsConversion: (Double) -> Double = { celsius ->
+        appState.toPreferredTemperatureUnits(celsius)
+    }
+
     val viewModel : DetailsViewModel = viewModel(
         factory = DetailsViewModel.Factory(
             DeviceManager.instance,
-            serialNumber ?: "?"
+            serialNumber ?: "?",
+            unitsConversion
         )
     )
 
     val screenState = DetailsScreenState(
         serialNumber = viewModel.serialNumber,
-        probeState =  viewModel.probe,
+        probeState =  viewModel.probeState,
         probeData = viewModel.probeData,
+        onGetTargetTemperatureC = { viewModel.predictionTargetTemperatureC },
         probeDataStartTimestamp = viewModel.probeDataStartTimestamp,
         measurementCardIsExpanded = appState.showMeasurements,
         plotCardIsExpanded = appState.showPlot,
         detailsCardIsExpanded = appState.showDetails,
         instantReadCardIsExpanded = appState.showInstantRead,
+        temperaturesCardIsExpanded = appState.showTemperatures,
+        predictionsCardIsExpanded = appState.showPrediction,
         onConnectClick =  { viewModel.toggleConnection() },
         onSetProbeColorClick = { color -> viewModel.setProbeColor(color) },
         onSetProbeIDClick = { id -> viewModel.setProbeID(id) },
         onShareClick = {
             val (fileName, fileData) = viewModel.getShareData()
             appState.onShareTextData(fileName, fileData)
-        }
+        },
+        onSetRemovalPredictionClick = {
+            viewModel.setRemovalPrediction(
+                appState.fromPreferredTemperatureUnits(it.toDouble())
+            )
+        },
+        onCancelPredictionClick = { viewModel.cancelPrediction() }
     )
 
     DetailsContent(
@@ -99,32 +116,66 @@ fun DetailsContent(
 ) {
     var showProbeColorDialog by remember { mutableStateOf(false) }
     var showProbeIDDialog by remember { mutableStateOf(false) }
+    var showCancelPredictionDialog by remember { mutableStateOf(false) }
+    var showEnterSetpointDialog by remember { mutableStateOf(false) }
     var shareIsEnabled = screenState.probeData.size > 0
 
     if (showProbeColorDialog) {
-        SingleSelectDialog(title = "Select Probe Color",
+        SingleSelectDialog(
+            title = "Change Probe Color",
             optionsList = ProbeColor.stringValues(),
             defaultSelected = 0,
-            submitButtonText = "OK",
+            submitButtonText = "Change",
             onSubmitButtonClick = {
                 val selectedColor = ProbeColor.fromRaw(it.toUInt())
                 screenState.onSetProbeColorClick(selectedColor)
                 showProbeColorDialog = false
             },
-            onDismissRequest = { showProbeColorDialog = false })
+            onDismissRequest = { showProbeColorDialog = false }
+        )
     }
 
     if (showProbeIDDialog) {
-        SingleSelectDialog(title = "Select Probe ID",
+        SingleSelectDialog(
+            title = "Change Probe ID",
             optionsList = ProbeID.stringValues(),
             defaultSelected = 0,
-            submitButtonText = "OK",
+            submitButtonText = "Change",
             onSubmitButtonClick = {
                 val selectedID = ProbeID.fromRaw(it.toUInt())
                 screenState.onSetProbeIDClick(selectedID)
                 showProbeIDDialog = false
             },
-            onDismissRequest = { showProbeIDDialog = false })
+            onDismissRequest = { showProbeIDDialog = false }
+        )
+    }
+
+    if (showCancelPredictionDialog) {
+        ConfirmationDialog(
+            title = "Stop Prediction",
+            details = "Are you sure you want to stop the active prediction?",
+            onYesClick = { screenState.onCancelPredictionClick() },
+            onDismiss = { showCancelPredictionDialog = false}
+        )
+    }
+
+    if (showEnterSetpointDialog) {
+        TemperatureSelectionDialog(
+            title = "Target Temperature",
+            buttonText = "Set",
+            onButtonClick = screenState.onSetRemovalPredictionClick,
+            onDismissRequest = { showEnterSetpointDialog = false },
+            unitsString = if(appState.units.value == AppState.Units.FAHRENHEIT) "Fahrenheit" else "Celsius",
+            initialValue = appState.toPreferredTemperatureUnits(
+                screenState.onGetTargetTemperatureC()
+            ).roundToInt(),
+            minValue = appState.toPreferredTemperatureUnits(
+                DetailsViewModel.MINIMUM_PREDICTION_SETPOINT_CELSIUS
+            ).toInt(),
+            maxValue = appState.toPreferredTemperatureUnits(
+                DetailsViewModel.MAXIMUM_PREDICTION_SETPOINT_CELSIUS
+            ).roundToInt()
+        )
     }
 
     AppScaffold(
@@ -151,15 +202,23 @@ fun DetailsContent(
         } else {
             LazyColumn {
                 item {
-                    InstantReadCard(
+                    TemperaturesCard(
                         probeState = screenState.probeState,
-                        cardIsExpanded = screenState.instantReadCardIsExpanded,
+                        cardIsExpanded = screenState.temperaturesCardIsExpanded,
                     )
                 }
                 item {
-                    MeasurementsCard(
+                    PredictionsCard(
                         probeState = screenState.probeState,
-                        cardIsExpanded = screenState.measurementCardIsExpanded,
+                        cardIsExpanded = screenState.predictionsCardIsExpanded,
+                        onSetPredictionClick = { showEnterSetpointDialog = true },
+                        onCancelPredictionClick = { showCancelPredictionDialog = true }
+                    )
+                }
+                item {
+                    InstantReadCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.instantReadCardIsExpanded,
                     )
                 }
                 item {
@@ -168,6 +227,12 @@ fun DetailsContent(
                         probeState = screenState.probeState,
                         cardIsExpanded = screenState.plotCardIsExpanded,
                         plotDataStartTimestamp = screenState.probeDataStartTimestamp
+                    )
+                }
+                item {
+                    MeasurementsCard(
+                        probeState = screenState.probeState,
+                        cardIsExpanded = screenState.measurementCardIsExpanded,
                     )
                 }
                 item {

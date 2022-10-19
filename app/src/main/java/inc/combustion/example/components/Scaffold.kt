@@ -212,13 +212,13 @@ fun ShareIconButton(
 
 @Composable
 fun TemperatureUnitsButton(
-    probeState: ProbeState,
+    appState: AppState,
     onClick: () -> Unit = { },
     modifier: Modifier = Modifier
 ) {
-    val unitsText = when(probeState.units.value) {
-        ProbeState.Units.CELSIUS -> stringResource(R.string.celsius_label)
-        ProbeState.Units.FAHRENHEIT -> stringResource(R.string.fahrenheit_label)
+    val unitsText = when(appState.units.value) {
+        AppState.Units.CELSIUS -> stringResource(R.string.celsius_label)
+        AppState.Units.FAHRENHEIT -> stringResource(R.string.fahrenheit_label)
     }
 
     TextButton(

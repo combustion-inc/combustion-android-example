@@ -13,4 +13,9 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorSecondary</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="NumberPickerText" parent="Theme.CombustionIncEngineering">
+        <item name="android:textSize">17sp</item>
+        <item name="android:fontFamily">soraFont</item>
+    </style>
 </resources>

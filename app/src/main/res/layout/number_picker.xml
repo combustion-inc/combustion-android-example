@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?><!--
   ~ Project: Combustion Inc. Android Example
-  ~ File: line_chart.xml
+  ~ File: number_picker.xml
   ~ Author: https://github.com/miwright2
   ~
   ~ MIT License
@@ -25,7 +25,8 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   ~ SOFTWARE.
   -->
-<com.github.mikephil.charting.charts.LineChart xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/lineChart"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"/>
+<NumberPicker xmlns:android="http://schemas.android.com/apk/res/android"
+    android:theme="@style/NumberPickerText"
+    android:id="@+id/numberPicker"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"/>
