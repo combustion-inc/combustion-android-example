@@ -57,6 +57,6 @@ jobs:
       with:
         appId: ${{secrets.FIREBASE_APP_ID}}
         token: ${{secrets.FIREBASE_TOKEN}}
-        groups: internal 
+        groups: smoke-test
         releaseNotesFile: app/build/outputs/release-notes.txt
         file: app/build/outputs/apk/release/app-release-signed.apk
