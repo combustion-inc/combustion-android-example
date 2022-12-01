@@ -11,7 +11,7 @@ buildscript {
         navigation_common_ktx_version = "2.4.1"
         activity_compose_version = "1.4.0"
         compose_compiler_version = '1.5.21'
-        kable_core_version = '0.10.3'
+        kable_core_version = '0.20.1'
         easypermissions_ktx_version = '1.0.0'
         settings_compose_version = '0.7.2'
         google_services_version = '4.3.10'
