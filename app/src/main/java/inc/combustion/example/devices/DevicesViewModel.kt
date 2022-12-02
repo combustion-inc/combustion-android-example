@@ -114,7 +114,7 @@ class DevicesViewModel(
         private val deviceManager: DeviceManager,
         private val temperatureUnitsConversion: (Double) -> Double
     ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DevicesViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return DevicesViewModel(deviceManager, temperatureUnitsConversion) as T

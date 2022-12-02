@@ -113,7 +113,7 @@ class DetailsViewModel (
         private val serialNumber: String,
         private val temperatureUnitsConversion: (Double) -> Double
     ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DetailsViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return DetailsViewModel(serialNumber, deviceManager, temperatureUnitsConversion) as T
