@@ -162,14 +162,14 @@ data class ProbeState(
             ProbeBatteryStatus.OK -> "Good"
         }
 
-        instantRead.value = if(state.instantRead != null) {
-            String.format("%.1f", state.instantRead?.let { convertTemperature(it) })
+        instantRead.value = if(state.instantReadCelsius != null) {
+            String.format("%.1f", state.instantReadCelsius?.let { convertTemperature(it) })
         } else {
             "---"
         }
 
-        if(state.temperatures != null) {
-            state.temperatures?.let {
+        if(state.temperaturesCelsius != null) {
+            state.temperaturesCelsius?.let {
                 T1.value = String.format("%.1f", convertTemperature(it.values[0]))
                 T2.value = String.format("%.1f", convertTemperature(it.values[1]))
                 T3.value = String.format("%.1f", convertTemperature(it.values[2]))
@@ -190,19 +190,19 @@ data class ProbeState(
             T8.value = "---"
         }
 
-        coreTemperature.value = state.coreTemperature?.let {
+        coreTemperature.value = state.coreTemperatureCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
            "---"
         }
 
-        surfaceTemperature.value = state.surfaceTemperature?.let {
+        surfaceTemperature.value = state.surfaceTemperatureCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
         }
 
-        ambientTemperature.value = state.ambientTemperature?.let {
+        ambientTemperature.value = state.ambientTemperatureCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
@@ -221,7 +221,7 @@ data class ProbeState(
 
         // convert to friendly string
         recordRange.value = when(state.connectionState) {
-            DeviceConnectionState.CONNECTED -> "${state.minSequence} : ${state.maxSequence}"
+            DeviceConnectionState.CONNECTED -> "${state.minSequenceNumber} : ${state.maxSequenceNumber}"
             else -> ""
         }
 
@@ -260,46 +260,39 @@ data class ProbeState(
             }
         } ?: run { "" }
 
-        predictionMode.value = state.predictionMode?.let { it.toString() } ?: run { ProbePredictionMode.NONE.toString() }
-        predictionType.value = state.predictionType?.let { it.toString() } ?: run { ProbePredictionType.NONE.toString() }
+        predictionMode.value = state.predictionMode?.toString() ?: run { ProbePredictionMode.NONE.toString() }
+        predictionType.value = state.predictionType?.toString() ?: run { ProbePredictionType.NONE.toString() }
 
-        rawSetPointTemperatureC.value = state.setPointTemperatureC ?:DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
+        rawSetPointTemperatureC.value = state.setPointTemperatureCelsius ?:DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
 
-        setPointTemperature.value = state.setPointTemperatureC?.let {
+        setPointTemperature.value = state.setPointTemperatureCelsius?.let {
             convertTemperature(it).roundToInt().toString()
         } ?: run {
             ""
         }
 
-        heatStartTemperature.value = state.heatStartTemperatureC?.let {
+        heatStartTemperature.value = state.heatStartTemperatureCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
         }
 
-        prediction.value = state.predictionS?.let {
+        prediction.value = state.predictionSeconds?.let {
             String.format("%02d:%02d", it.toInt() / 60, it.toInt() % 60)
         } ?: run {
             "--:--"
         }
 
-        estimateCore.value = state.estimatedCoreC?.let {
+        estimateCore.value = state.estimatedCoreCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
         }
 
-        if(state.heatStartTemperatureC != null && state.estimatedCoreC != null && state.setPointTemperatureC != null) {
-            val start = state.heatStartTemperatureC!!
-            val end = state.setPointTemperatureC!!
-            val core = state.estimatedCoreC!!
-
-            if(core > end)
-                percentThroughCook.value = "100%"
-            else
-                percentThroughCook.value = "${(((core - start) / (end - start)) * 100.0).toInt()}%"
-        } else {
-            percentThroughCook.value = ""
+        percentThroughCook.value = state.predictionPercent?.let {
+            "${it.toInt()}%"
+        } ?: run {
+            ""
         }
     }
 
