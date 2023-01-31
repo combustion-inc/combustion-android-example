@@ -119,7 +119,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
         // Initialize the DeviceManger
         DeviceManager.initialize(application, DeviceManager.Settings(
-            meatNetEnabled = false
+            meatNetEnabled = false,
+            autoReconnect = true
         ))
 
         val repository = DeviceManager.instance
