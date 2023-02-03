@@ -202,11 +202,6 @@ class DevicesViewModel(
                         // for this ViewModel/Composable screen.  The Composable will update
                         // automatically since it observing this ProbeState state object.
                         it.updateProbeState(probe, deviceManager.recordsDownloaded(probe.serialNumber))
-
-                        // The following shows how to initiate a log transfer from the device.
-                        if(probe.uploadState is ProbeUploadState.ProbeUploadNeeded) {
-                            deviceManager.startRecordTransfer(probe.serialNumber)
-                        }
                     }
                 }
             }
