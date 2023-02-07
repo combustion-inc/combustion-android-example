@@ -39,7 +39,7 @@ class SettingsViewModel : ViewModel() {
 
     val uiState by mutableStateOf(
         SettingsScreenState(
-            isScanning = DeviceManager.instance.isScanningForDevices,
+            isScanning = DeviceManager.instance.scanningForProbes,
             onScanningToggle = { setScanning(it) },
             onDataCacheClear = { DeviceManager.instance.clearDevices() },
             versionString = "${BuildConfig.VERSION_NAME} ${BuildConfig.BUILD_TYPE}",

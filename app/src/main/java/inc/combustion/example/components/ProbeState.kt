@@ -98,6 +98,7 @@ data class ProbeState(
     val percentThroughCook: MutableState<String> = mutableStateOf(""),
     val prediction: MutableState<String> = mutableStateOf(""),
     val estimateCore: MutableState<String> = mutableStateOf(""),
+    val predictionIsStale: MutableState<Boolean> = mutableStateOf(true)
 ) {
     enum class ConnectionState {
         OUT_OF_RANGE,
@@ -149,7 +150,8 @@ data class ProbeState(
         color.value = state.color.toString()
         id.value = state.id.toString()
         isUploading.value = (state.uploadState is ProbeUploadState.ProbeUploadInProgress)
-
+        predictionIsStale.value = state.predictionStale
+        
         samplePeriod.value = if(state.sessionInfo != null) {
             String.format("%d ms", state.sessionInfo?.let { it.samplePeriod.toLong() } )
         } else {

@@ -77,24 +77,13 @@ class DevicesViewModel(
                 // are produces by the service.
                 deviceManager.discoveredProbesFlow.collect { event ->
                     when(event) {
-                        is DeviceDiscoveredEvent.ScanningOn -> { }
-                        is DeviceDiscoveredEvent.BluetoothOn -> { }
-                        is DeviceDiscoveredEvent.ScanningOff -> { }
-
                         // When a device is discovered process it.
-                        is DeviceDiscoveredEvent.DeviceDiscovered -> {
+                        is ProbeDiscoveredEvent.ProbeDiscovered -> {
                             onDiscoveredDevice(event.serialNumber)
                         }
-
-                        // We clear devices when Bluetooth is off.  This isn't required, just
-                        // how the example behaves.
-                        is DeviceDiscoveredEvent.BluetoothOff -> {
-                            deviceManager.clearDevices()
-                        }
-
                         // When the Service notifies that devices have been cleared, we clear
                         // the UI state.
-                        is DeviceDiscoveredEvent.DevicesCleared -> {
+                        is ProbeDiscoveredEvent.DevicesCleared -> {
                             probes.clear()
                         }
                     }
@@ -213,11 +202,6 @@ class DevicesViewModel(
                         // for this ViewModel/Composable screen.  The Composable will update
                         // automatically since it observing this ProbeState state object.
                         it.updateProbeState(probe, deviceManager.recordsDownloaded(probe.serialNumber))
-
-                        // The following shows how to initiate a log transfer from the device.
-                        if(probe.uploadState is ProbeUploadState.ProbeUploadNeeded) {
-                            deviceManager.startRecordTransfer(probe.serialNumber)
-                        }
                     }
                 }
             }
