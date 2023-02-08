@@ -142,7 +142,7 @@ data class ProbeState(
      */
     fun updateProbeState(state: Probe, downloads: Int) {
         macAddress.value = state.mac
-        firmwareVersion.value = state.fwVersion
+        firmwareVersion.value = state.fwVersion.toString()
         hardwareRevision.value = state.hwRevision
         connectionState.value = ConnectionState.fromDeviceConnectionState(state.connectionState)
         rssi.value = state.rssi
@@ -150,7 +150,7 @@ data class ProbeState(
         color.value = state.color.toString()
         id.value = state.id.toString()
         isUploading.value = (state.uploadState is ProbeUploadState.ProbeUploadInProgress)
-        predictionIsStale.value = state.predictionStale
+        predictionIsStale.value = state.statusNotificationsStale
         
         samplePeriod.value = if(state.sessionInfo != null) {
             String.format("%d ms", state.sessionInfo?.let { it.samplePeriod.toLong() } )
