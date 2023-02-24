@@ -159,10 +159,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                         if(bluetoothTurnedOff) {
                             // We clear devices when Bluetooth is off.  This isn't required, just
                             // how the example behaves.
-                            DeviceManager.instance.clearDevices()
+                            repository.clearDevices()
                         }
                     }
                 }
+            }
+
+            // Same as above, we clear devices when Bluetooth is off.  This isn't required,
+            // just how the example behaves
+            bluetoothIsOn.value = repository.networkFlow.value.bluetoothOn
+            if(!bluetoothIsOn.value) {
+                repository.clearDevices()
             }
         }
 
@@ -244,12 +251,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             service.cancel(it)
         }
 
-        // Unbind Combustion Service. The DeviceManager will automatically unbind the connection
+        // Stops the Combustion Service. The DeviceManager will automatically unbind the connection
         // when all references reach 0.
         //
         // See README.md for further guidelines on managing Service Lifecycle in more
         // complex apps.
-        DeviceManager.unbindCombustionService()
+        DeviceManager.stopCombustionService()
 
         super.onDestroy()
     }
