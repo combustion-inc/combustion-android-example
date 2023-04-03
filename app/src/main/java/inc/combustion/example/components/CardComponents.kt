@@ -677,6 +677,16 @@ fun ProbeDetails(
                     color = color
                 )
                 CardDataItem(
+                    label = "SKU",
+                    value = probeState.modelInformation.value?.sku ?: "",
+                    color = color
+                )
+                CardDataItem(
+                    label = "Lot",
+                    value = probeState.modelInformation.value?.manufacturingLot ?: "",
+                    color = color
+                )
+                CardDataItem(
                     label = "MAC",
                     value = probeState.macAddress.value,
                     color = color

@@ -62,6 +62,7 @@ data class ProbeState(
     val macAddress: MutableState<String> = mutableStateOf("TBD"),
     val firmwareVersion: MutableState<String?> = mutableStateOf(null),
     val hardwareRevision: MutableState<String?> = mutableStateOf(null),
+    val modelInformation: MutableState<ModelInformation?> = mutableStateOf(null),
     val rssi: MutableState<Int> = mutableStateOf(0),
     val temperaturesCelsius: SnapshotStateList<Double> = mutableStateListOf(
         0.0,
@@ -144,6 +145,7 @@ data class ProbeState(
         macAddress.value = state.mac
         firmwareVersion.value = state.fwVersion.toString()
         hardwareRevision.value = state.hwRevision
+        modelInformation.value = state.modelInformation
         connectionState.value = ConnectionState.fromDeviceConnectionState(state.connectionState)
         rssi.value = state.rssi
         recordsDownloaded.value = downloads
