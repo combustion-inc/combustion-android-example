@@ -108,7 +108,8 @@ data class ProbeState(
         CONNECTING,
         CONNECTED,
         DISCONNECTING,
-        DISCONNECTED;
+        DISCONNECTED,
+        NO_ROUTE;
 
         companion object {
             fun fromDeviceConnectionState(state: DeviceConnectionState) : ConnectionState {
@@ -120,6 +121,7 @@ data class ProbeState(
                     DeviceConnectionState.CONNECTED -> CONNECTED
                     DeviceConnectionState.DISCONNECTING -> DISCONNECTING
                     DeviceConnectionState.DISCONNECTED -> DISCONNECTED
+                    DeviceConnectionState.NO_ROUTE -> NO_ROUTE
                 }
             }
         }
@@ -229,16 +231,7 @@ data class ProbeState(
             else -> ""
         }
 
-        connectionDescription.value = when(state.connectionState) {
-            DeviceConnectionState.OUT_OF_RANGE -> "Not Available"
-            DeviceConnectionState.ADVERTISING_CONNECTABLE -> "Available"
-            DeviceConnectionState.ADVERTISING_NOT_CONNECTABLE -> "Not Available"
-            DeviceConnectionState.CONNECTING -> "Available"
-            DeviceConnectionState.CONNECTED -> "Connected"
-            DeviceConnectionState.DISCONNECTING -> "Connected"
-            DeviceConnectionState.DISCONNECTED -> "Disconnected"
-        }
-
+        connectionDescription.value = state.connectionState.toString()
         virtualCoreSensor.value = state.virtualSensors.virtualCoreSensor.toString()
         virtualSurfaceSensor.value = state.virtualSensors.virtualSurfaceSensor.toString()
         virtualAmbientSensor.value = state.virtualSensors.virtualAmbientSensor.toString()

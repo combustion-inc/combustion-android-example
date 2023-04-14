@@ -524,7 +524,6 @@ fun PredictionDetails(
     Row(
         modifier = Modifier.fillMaxWidth()
     ){
-        val style = if(isPredictionEnabled) MaterialTheme.typography.subtitle2 else MaterialTheme.typography.h2
         val text = if(probeState.predictionIsStale.value) "---" else probeState.predictionState.value
         Text(
             modifier = Modifier
