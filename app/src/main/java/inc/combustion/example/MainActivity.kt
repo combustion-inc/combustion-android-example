@@ -299,6 +299,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             // number is random and the simulated probe does not support data upload.
             //
             // DeviceManager.instance.addSimulatedProbe()
+            // DeviceManager.instance.addSimulatedProbe()
+            // DeviceManager.instance.addSimulatedProbe()
         }
 
         return hasPerms

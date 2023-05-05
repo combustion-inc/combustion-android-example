@@ -145,7 +145,7 @@ data class ProbeState(
      */
     fun updateProbeState(state: Probe, downloads: Int) {
         macAddress.value = state.mac
-        firmwareVersion.value = state.fwVersion.toString()
+        firmwareVersion.value = state.fwVersion?.toString() ?: ""
         hardwareRevision.value = state.hwRevision
         modelInformation.value = state.modelInformation
         connectionState.value = ConnectionState.fromDeviceConnectionState(state.connectionState)
