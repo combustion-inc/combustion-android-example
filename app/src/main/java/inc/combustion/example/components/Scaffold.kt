@@ -159,6 +159,7 @@ fun ConnectionStateButton(
         ProbeState.ConnectionState.CONNECTED -> painterResource(R.drawable.ic_bluetooth_24)
         ProbeState.ConnectionState.DISCONNECTING -> painterResource(R.drawable.ic_bluetooth_24)
         ProbeState.ConnectionState.DISCONNECTED -> painterResource(R.drawable.ic_bluetooth_24)
+        ProbeState.ConnectionState.NO_ROUTE -> painterResource(R.drawable.ic_bluetooth_24)
     }
 
     val bluetoothIconColor = when(probeState.connectionState.value) {
@@ -169,6 +170,7 @@ fun ConnectionStateButton(
         ProbeState.ConnectionState.CONNECTING -> MaterialTheme.colors.onSecondary
         ProbeState.ConnectionState.DISCONNECTING -> MaterialTheme.colors.onSecondary
         ProbeState.ConnectionState.DISCONNECTED -> MaterialTheme.colors.onSecondary
+        ProbeState.ConnectionState.NO_ROUTE -> MaterialTheme.colors.onSecondary
 
         // primary color
         ProbeState.ConnectionState.CONNECTED -> MaterialTheme.colors.onPrimary

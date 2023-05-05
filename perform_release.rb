@@ -62,7 +62,7 @@ end
 
 def create_github_release(version_tag, files, build_dir)
     s = "gh release create #{version_tag} --generate-notes"
-    s << " --title \"Combustion Android Example #{version_tag}\""
+    s << " --title \"Combustion Android Open Source App #{version_tag}\""
 
     # Note: This interface is brittle as it depends on paths defined in the Makefile
     files.each {

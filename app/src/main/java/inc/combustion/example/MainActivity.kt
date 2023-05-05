@@ -49,7 +49,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
-import inc.combustion.framework.service.DeviceDiscoveredEvent
 import inc.combustion.framework.service.DeviceManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.*
@@ -60,8 +59,8 @@ import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
-    private var isScanning = mutableStateOf(true)
-    private var bluetoothIsOn = mutableStateOf(true)
+    private var isScanning = mutableStateOf(false)
+    private var bluetoothIsOn = mutableStateOf(false)
     private var notificationId : Int? = null
 
     companion object {
@@ -72,7 +71,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 arrayOf(
                     Manifest.permission.BLUETOOTH_SCAN,
-                    Manifest.permission.BLUETOOTH_CONNECT
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.POST_NOTIFICATIONS
                 )
             }
             // Lower than API Level 31
@@ -118,8 +118,11 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         // DebugSettings.DEBUG_LOG_TRANSFER = true
 
         // Initialize the DeviceManger
-        DeviceManager.initialize(application) {
-        }
+        DeviceManager.initialize(application, DeviceManager.Settings(
+            meatNetEnabled = false,
+            autoReconnect = true,
+            autoLogTransfer = true
+        ))
 
         val repository = DeviceManager.instance
 
@@ -141,40 +144,32 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     // not automatically enabled when Bluetooth is turned on. To enable scanning
                     // across Bluetooth state changes, turn it on in response to the BluetoothOn
                     // event.  See below.
-                    repository.discoveredProbesFlow.collect { event ->
-                        when(event) {
-                            // This will occur in response to the DeviceManager scanning API calls.
-                            is DeviceDiscoveredEvent.ScanningOn -> {
-                                isScanning.value = true
-                            }
-                            // This will occur in response to the DeviceManager scannign API calls
-                            // and when Bluetooth is disabled.
-                            is DeviceDiscoveredEvent.ScanningOff -> {
-                                isScanning.value = false
-                            }
-                            // This occurs when a device is discovered during scanning.  See
-                            // DevicesViewModel for an example of how to process this event.
-                            is DeviceDiscoveredEvent.DeviceDiscovered -> {
-                                isScanning.value = true
-                            }
-                            // This will occur occur upon initialization if Bluetooth is off, or when
-                            // the user changes Bluetooth from On to Off.
-                            is DeviceDiscoveredEvent.BluetoothOff -> {
-                                bluetoothIsOn.value = false
-                            }
-                            // Start scanning when Bluetooth is on.  This will occur upon
-                            // initialization if Bluetooth is already enabled, or when
-                            // the user changes Bluetooth from Off to On.
-                            is DeviceDiscoveredEvent.BluetoothOn -> {
-                                bluetoothIsOn.value = true
-                                tryStartScan()
-                            }
-                            is DeviceDiscoveredEvent.DevicesCleared -> {
-                                // do nothing
-                            }
+                    repository.networkFlow.collect { state ->
+                        val bluetoothTurnedOn = !bluetoothIsOn.value && state.bluetoothOn
+                        val bluetoothTurnedOff = bluetoothIsOn.value && !state.bluetoothOn
+
+                        isScanning.value = state.scanningOn
+                        bluetoothIsOn.value = state.bluetoothOn
+
+                        if(bluetoothTurnedOn) {
+                            // Start scanning when Bluetooth turns on
+                            tryStartScan()
+                        }
+
+                        if(bluetoothTurnedOff) {
+                            // We clear devices when Bluetooth is off.  This isn't required, just
+                            // how the example behaves.
+                            repository.clearDevices()
                         }
                     }
                 }
+            }
+
+            // Same as above, we clear devices when Bluetooth is off.  This isn't required,
+            // just how the example behaves
+            bluetoothIsOn.value = repository.networkFlow.value.bluetoothOn
+            if(!bluetoothIsOn.value) {
+                repository.clearDevices()
             }
         }
 
@@ -256,12 +251,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             service.cancel(it)
         }
 
-        // Unbind Combustion Service. The DeviceManager will automatically unbind the connection
+        // Stops the Combustion Service. The DeviceManager will automatically unbind the connection
         // when all references reach 0.
         //
         // See README.md for further guidelines on managing Service Lifecycle in more
         // complex apps.
-        DeviceManager.unbindCombustionService()
+        DeviceManager.stopCombustionService()
 
         super.onDestroy()
     }
@@ -299,10 +294,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
             DeviceManager.instance.startScanningForProbes()
 
             // The following call adds a simulated probe.  The simulated probe will be published
-            // as a DeviceDiscoveredEvent.DeviceDiscovered event.  It produces simulated
+            // as a ProbeDiscoveredEvent.ProbeDiscovered event.  It produces simulated
             // temperature updates that are delivered through its state flow.  Note the serial
             // number is random and the simulated probe does not support data upload.
             //
+            // DeviceManager.instance.addSimulatedProbe()
+            // DeviceManager.instance.addSimulatedProbe()
             // DeviceManager.instance.addSimulatedProbe()
         }
 

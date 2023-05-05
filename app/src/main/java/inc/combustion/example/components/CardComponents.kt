@@ -488,82 +488,76 @@ fun PredictionDetails(
 ) {
     val emptyHandler: () -> Unit = { }
     val color = DataColor(probeState = probeState)
-    val isNotConnected = probeState.connectionState.value != ProbeState.ConnectionState.CONNECTED
+    val isConnected = probeState.connectionState.value == ProbeState.ConnectionState.CONNECTED
     val isPredictionEnabled = probeState.predictionMode.value != ProbePredictionMode.NONE.toString()
     val isCooking = probeState.predictionState.value == "Cooking"
     val isPredicting = probeState.predictionState.value == "Predicting"
     val actionString = if(isPredictionEnabled) "Change Target Temperature" else "Enter Target Temperature"
     val cancelPredictionHandler = if(isPredictionEnabled) onCancelPredictionClick else emptyHandler
 
-    if(isNotConnected) {
-        CardProgressIndicator(reason = "Please Connect...")
-    }
-    else {
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ){
-            if(isPredictionEnabled) {
-                if(isPredicting) {
-                    Text(
-                        modifier = Modifier
-                            .weight(1.0f),
-                        color = color,
-                        style = MaterialTheme.typography.h2,
-                        textAlign = TextAlign.Center,
-                        text = probeState.prediction.value
-                    )
-                }
-                else if(isCooking){
-                    Text(
-                        modifier = Modifier
-                            .weight(1.0f),
-                        color = color,
-                        style = MaterialTheme.typography.h2,
-                        textAlign = TextAlign.Center,
-                        text = probeState.percentThroughCook.value
-                    )
-                }
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ){
-            val style = if(isPredictionEnabled) MaterialTheme.typography.subtitle2 else MaterialTheme.typography.h2
-
-            Text(
-                modifier = Modifier
-                    .weight(1.0f),
-                color = color,
-                style = MaterialTheme.typography.h3,
-                textAlign = TextAlign.Center,
-                text = probeState.predictionState.value,
-            )
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth()
+    ){
         if(isPredictionEnabled) {
-            CardDataItem(
-                label = "Target Temperature",
-                value = probeState.setPointTemperature.value,
-                color = color
-            )
             if(isPredicting) {
-                CardDataItem(
-                    label = "Progress",
-                    value = probeState.percentThroughCook.value,
-                    color = color
+                Text(
+                    modifier = Modifier
+                        .weight(1.0f),
+                    color = color,
+                    style = MaterialTheme.typography.h2,
+                    textAlign = TextAlign.Center,
+                    text = probeState.prediction.value
+                )
+            }
+            else if(isCooking){
+                Text(
+                    modifier = Modifier
+                        .weight(1.0f),
+                    color = color,
+                    style = MaterialTheme.typography.h2,
+                    textAlign = TextAlign.Center,
+                    text = probeState.percentThroughCook.value
                 )
             }
         }
-        CardWideButton(
-            label = actionString,
-            enabled = true,
-            onClick = onSetPredictionClick
-        )
-        CardWideButton(
-            label = "Stop Prediction",
-            enabled = isPredictionEnabled,
-            onClick = cancelPredictionHandler
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth()
+    ){
+        val text = if(probeState.predictionIsStale.value) "---" else probeState.predictionState.value
+        Text(
+            modifier = Modifier
+                .weight(1.0f),
+            color = color,
+            style = MaterialTheme.typography.h3,
+            textAlign = TextAlign.Center,
+            text = text,
         )
     }
+    if(isPredictionEnabled) {
+        CardDataItem(
+            label = "Target Temperature",
+            value = if(probeState.predictionIsStale.value) "---" else probeState.setPointTemperature.value,
+            color = color
+        )
+        if(isPredicting) {
+            CardDataItem(
+                label = "Progress",
+                value = if(probeState.predictionIsStale.value) "---" else probeState.percentThroughCook.value,
+                color = color
+            )
+        }
+    }
+    CardWideButton(
+        label = actionString,
+        enabled = isConnected,
+        onClick = onSetPredictionClick
+    )
+    CardWideButton(
+        label = "Stop Prediction",
+        enabled = isPredictionEnabled && isConnected,
+        onClick = cancelPredictionHandler
+    )
 }
 
 @Composable
@@ -679,6 +673,16 @@ fun ProbeDetails(
                 CardDataItem(
                     label = "Hardware",
                     value = probeState.hardwareRevision.value ?: "",
+                    color = color
+                )
+                CardDataItem(
+                    label = "SKU",
+                    value = probeState.modelInformation.value?.sku ?: "",
+                    color = color
+                )
+                CardDataItem(
+                    label = "Lot",
+                    value = probeState.modelInformation.value?.manufacturingLot ?: "",
                     color = color
                 )
                 CardDataItem(

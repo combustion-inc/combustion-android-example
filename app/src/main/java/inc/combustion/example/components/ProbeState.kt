@@ -62,6 +62,7 @@ data class ProbeState(
     val macAddress: MutableState<String> = mutableStateOf("TBD"),
     val firmwareVersion: MutableState<String?> = mutableStateOf(null),
     val hardwareRevision: MutableState<String?> = mutableStateOf(null),
+    val modelInformation: MutableState<ModelInformation?> = mutableStateOf(null),
     val rssi: MutableState<Int> = mutableStateOf(0),
     val temperaturesCelsius: SnapshotStateList<Double> = mutableStateListOf(
         0.0,
@@ -98,6 +99,7 @@ data class ProbeState(
     val percentThroughCook: MutableState<String> = mutableStateOf(""),
     val prediction: MutableState<String> = mutableStateOf(""),
     val estimateCore: MutableState<String> = mutableStateOf(""),
+    val predictionIsStale: MutableState<Boolean> = mutableStateOf(true)
 ) {
     enum class ConnectionState {
         OUT_OF_RANGE,
@@ -106,7 +108,8 @@ data class ProbeState(
         CONNECTING,
         CONNECTED,
         DISCONNECTING,
-        DISCONNECTED;
+        DISCONNECTED,
+        NO_ROUTE;
 
         companion object {
             fun fromDeviceConnectionState(state: DeviceConnectionState) : ConnectionState {
@@ -118,6 +121,7 @@ data class ProbeState(
                     DeviceConnectionState.CONNECTED -> CONNECTED
                     DeviceConnectionState.DISCONNECTING -> DISCONNECTING
                     DeviceConnectionState.DISCONNECTED -> DISCONNECTED
+                    DeviceConnectionState.NO_ROUTE -> NO_ROUTE
                 }
             }
         }
@@ -141,15 +145,17 @@ data class ProbeState(
      */
     fun updateProbeState(state: Probe, downloads: Int) {
         macAddress.value = state.mac
-        firmwareVersion.value = state.fwVersion
+        firmwareVersion.value = state.fwVersion?.toString() ?: ""
         hardwareRevision.value = state.hwRevision
+        modelInformation.value = state.modelInformation
         connectionState.value = ConnectionState.fromDeviceConnectionState(state.connectionState)
         rssi.value = state.rssi
         recordsDownloaded.value = downloads
         color.value = state.color.toString()
         id.value = state.id.toString()
         isUploading.value = (state.uploadState is ProbeUploadState.ProbeUploadInProgress)
-
+        predictionIsStale.value = state.statusNotificationsStale
+        
         samplePeriod.value = if(state.sessionInfo != null) {
             String.format("%d ms", state.sessionInfo?.let { it.samplePeriod.toLong() } )
         } else {
@@ -162,14 +168,14 @@ data class ProbeState(
             ProbeBatteryStatus.OK -> "Good"
         }
 
-        instantRead.value = if(state.instantRead != null) {
-            String.format("%.1f", state.instantRead?.let { convertTemperature(it) })
+        instantRead.value = if(state.instantReadCelsius != null) {
+            String.format("%.1f", state.instantReadCelsius?.let { convertTemperature(it) })
         } else {
             "---"
         }
 
-        if(state.temperatures != null) {
-            state.temperatures?.let {
+        if(state.temperaturesCelsius != null) {
+            state.temperaturesCelsius?.let {
                 T1.value = String.format("%.1f", convertTemperature(it.values[0]))
                 T2.value = String.format("%.1f", convertTemperature(it.values[1]))
                 T3.value = String.format("%.1f", convertTemperature(it.values[2]))
@@ -190,19 +196,19 @@ data class ProbeState(
             T8.value = "---"
         }
 
-        coreTemperature.value = state.coreTemperature?.let {
+        coreTemperature.value = state.coreTemperatureCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
            "---"
         }
 
-        surfaceTemperature.value = state.surfaceTemperature?.let {
+        surfaceTemperature.value = state.surfaceTemperatureCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
         }
 
-        ambientTemperature.value = state.ambientTemperature?.let {
+        ambientTemperature.value = state.ambientTemperatureCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
@@ -221,20 +227,11 @@ data class ProbeState(
 
         // convert to friendly string
         recordRange.value = when(state.connectionState) {
-            DeviceConnectionState.CONNECTED -> "${state.minSequence} : ${state.maxSequence}"
+            DeviceConnectionState.CONNECTED -> "${state.minSequenceNumber} : ${state.maxSequenceNumber}"
             else -> ""
         }
 
-        connectionDescription.value = when(state.connectionState) {
-            DeviceConnectionState.OUT_OF_RANGE -> "Not Available"
-            DeviceConnectionState.ADVERTISING_CONNECTABLE -> "Available"
-            DeviceConnectionState.ADVERTISING_NOT_CONNECTABLE -> "Not Available"
-            DeviceConnectionState.CONNECTING -> "Available"
-            DeviceConnectionState.CONNECTED -> "Connected"
-            DeviceConnectionState.DISCONNECTING -> "Connected"
-            DeviceConnectionState.DISCONNECTED -> "Disconnected"
-        }
-
+        connectionDescription.value = state.connectionState.toString()
         virtualCoreSensor.value = state.virtualSensors.virtualCoreSensor.toString()
         virtualSurfaceSensor.value = state.virtualSensors.virtualSurfaceSensor.toString()
         virtualAmbientSensor.value = state.virtualSensors.virtualAmbientSensor.toString()
@@ -260,46 +257,39 @@ data class ProbeState(
             }
         } ?: run { "" }
 
-        predictionMode.value = state.predictionMode?.let { it.toString() } ?: run { ProbePredictionMode.NONE.toString() }
-        predictionType.value = state.predictionType?.let { it.toString() } ?: run { ProbePredictionType.NONE.toString() }
+        predictionMode.value = state.predictionMode?.toString() ?: run { ProbePredictionMode.NONE.toString() }
+        predictionType.value = state.predictionType?.toString() ?: run { ProbePredictionType.NONE.toString() }
 
-        rawSetPointTemperatureC.value = state.setPointTemperatureC ?:DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
+        rawSetPointTemperatureC.value = state.setPointTemperatureCelsius ?:DeviceManager.MINIMUM_PREDICTION_SETPOINT_CELSIUS
 
-        setPointTemperature.value = state.setPointTemperatureC?.let {
+        setPointTemperature.value = state.setPointTemperatureCelsius?.let {
             convertTemperature(it).roundToInt().toString()
         } ?: run {
             ""
         }
 
-        heatStartTemperature.value = state.heatStartTemperatureC?.let {
+        heatStartTemperature.value = state.heatStartTemperatureCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
         }
 
-        prediction.value = state.predictionS?.let {
+        prediction.value = state.predictionSeconds?.let {
             String.format("%02d:%02d", it.toInt() / 60, it.toInt() % 60)
         } ?: run {
             "--:--"
         }
 
-        estimateCore.value = state.estimatedCoreC?.let {
+        estimateCore.value = state.estimatedCoreCelsius?.let {
             String.format("%.1f", convertTemperature(it))
         } ?: run {
             "---"
         }
 
-        if(state.heatStartTemperatureC != null && state.estimatedCoreC != null && state.setPointTemperatureC != null) {
-            val start = state.heatStartTemperatureC!!
-            val end = state.setPointTemperatureC!!
-            val core = state.estimatedCoreC!!
-
-            if(core > end)
-                percentThroughCook.value = "100%"
-            else
-                percentThroughCook.value = "${(((core - start) / (end - start)) * 100.0).toInt()}%"
-        } else {
-            percentThroughCook.value = ""
+        percentThroughCook.value = state.predictionPercent?.let {
+            "${it.toInt()}%"
+        } ?: run {
+            ""
         }
     }
 
